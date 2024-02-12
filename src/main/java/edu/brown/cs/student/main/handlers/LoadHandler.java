@@ -5,31 +5,42 @@ import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.Parser;
 import edu.brown.cs.student.main.creators.ListCreator;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
+import edu.brown.cs.student.main.exceptions.FactoryFailureException;
+import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
 public class LoadHandler implements Route {
   private List<List<String>> data;
+  private CSVDatasource state;
 
-  public LoadHandler(){
-
+  public LoadHandler(CSVDatasource state){
+    this.state = state;
   }
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String filename = request.queryParams("filename");
     Map<String, Object> responseMap = new HashMap<>();
-    Reader reader = new FileReader(filename); // could throw file not found exception
-    Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
-    this.data = parser.parseCSV();
+    if (!filename.contains("data/")) { //todo should this have ./ needed
+      return new LoadFailureResponse("Error: file must not be outside of the /data/ directory").serialize();
+    }
 
-
-    return null;
+    try{
+      this.state.parseDataset(filename);
+    } catch (MalformedDataException | IOException | FactoryFailureException e){
+      return new LoadFailureResponse(e.getMessage()).serialize();
+    }
+    responseMap.put("filename", filename);
+    return new LoadSuccessResponse(responseMap).serialize();
   }
 
   public record LoadSuccessResponse(String response_type, Map<String, Object> responseMap) {
@@ -57,9 +68,9 @@ public class LoadHandler implements Route {
   }
 
   /** Response object to send if someone gave a CSV that couldn't be parsed */
-  public record LoadFailureResponse(String response_type) {
-    public LoadFailureResponse() {
-      this("error");
+  public record LoadFailureResponse(String response_type, String error_message) {
+    public LoadFailureResponse(String errorMessage) {
+      this("error", errorMessage);
     }
 
     /**
