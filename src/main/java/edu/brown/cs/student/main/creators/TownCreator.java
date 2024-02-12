@@ -1,10 +1,7 @@
 package edu.brown.cs.student.main.creators;
 
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
-import edu.brown.cs.student.main.interfaces.CreatorFromRow;
-import edu.brown.cs.student.main.rowObjects.Star;
 import edu.brown.cs.student.main.rowObjects.Town;
-
 import java.util.List;
 
 /** StarCreator makes each row into a Star object */

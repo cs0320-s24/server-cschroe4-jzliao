@@ -1,7 +1,7 @@
 package edu.brown.cs.student.main.creators;
 
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
-import edu.brown.cs.student.main.interfaces.CreatorFromRow;
+
 import java.util.ArrayList;
 import java.util.List;
 

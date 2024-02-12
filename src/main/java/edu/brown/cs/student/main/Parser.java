@@ -2,7 +2,7 @@ package edu.brown.cs.student.main;
 
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
-import edu.brown.cs.student.main.interfaces.CreatorFromRow;
+import edu.brown.cs.student.main.creators.CreatorFromRow;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
