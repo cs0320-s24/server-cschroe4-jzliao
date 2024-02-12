@@ -20,7 +20,8 @@ public class ViewHandler implements Route {
     public ViewHandler(CSVDatasource state){
         this.state = state;
     }
-
+    //TODO: looking at the data there is a lot of \" when there are numbers. Do we want to
+    // edit our parser to trim these out or not?
     @Override
     public Object handle(Request request, Response response) throws Exception {
         try{

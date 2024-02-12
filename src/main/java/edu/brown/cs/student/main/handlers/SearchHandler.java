@@ -16,7 +16,13 @@ public class SearchHandler implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
         CSVData dataset = this.state.getDataset();
-        // instantiate searcher?
+        /*TODO:
+           -instantiate searcher?
+            - parameters: copy logic from main
+            - q: if dataset is a CSVData object how do we get it as a list to search?
+            - also the current searcher makes its own parser so how should we bypass that or change the structure?
+            - return a record with a response map containing each of the matching rows.
+         */
 
         return null;
     }
