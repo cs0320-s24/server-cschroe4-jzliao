@@ -2,15 +2,13 @@ package edu.brown.cs.student.main.handlers;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-
+import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
+import edu.brown.cs.student.main.exceptions.FactoryFailureException;
+import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
-import edu.brown.cs.student.main.exceptions.FactoryFailureException;
-import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -19,21 +17,30 @@ public class LoadHandler implements Route {
   private List<List<String>> data;
   private CSVDatasource state;
 
-  public LoadHandler(CSVDatasource state){
+  public LoadHandler(CSVDatasource state) {
     this.state = state;
   }
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String filename = request.queryParams("filename");
-    Map<String, Object> responseMap = new HashMap<>();
-    if (!filename.contains("data/")) { //todo should this have ./ needed
-      return new LoadFailureResponse("Error: file must not be outside of the /data/ directory").serialize();
+    String hasHeader = request.queryParams("hasHeader");
+
+    // setting the boolean indicating whether there is a header
+    boolean header = false;
+    if (hasHeader.equals("yes")) {
+      header = true;
     }
 
-    try{
-      this.state.parseDataset(filename);
-    } catch (MalformedDataException | IOException | FactoryFailureException e){
+    Map<String, Object> responseMap = new HashMap<>();
+    if (!filename.contains("data/")) { // todo should this have ./ needed
+      return new LoadFailureResponse("Error: file must not be outside of the /data/ directory")
+          .serialize();
+    }
+
+    try {
+      this.state.parseDataset(filename, header);
+    } catch (MalformedDataException | IOException | FactoryFailureException e) {
       return new LoadFailureResponse(e.getMessage()).serialize();
     }
     responseMap.put("filename", filename);

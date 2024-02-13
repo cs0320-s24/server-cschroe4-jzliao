@@ -1,7 +1,6 @@
 package edu.brown.cs.student.main.creators;
 
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
-
 import java.util.List;
 
 /** ListCreator makes each row a list of strings */

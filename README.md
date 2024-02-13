@@ -11,3 +11,10 @@
 # Tests
 
 # How to
+
+# Running TODOS:
+- add headers boolean to loadcsv parameters
+- make LocalCSVSource safer (maybe do the copy thing from lecture so dataset is not exposed)
+- edit parser to trim the \
+- discuss how to put dataset into map (all at once or for each row?)
+- add identifier handling in SearchHandler

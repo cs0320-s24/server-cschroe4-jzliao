@@ -69,7 +69,8 @@ public final class Main {
     try {
       Reader reader = new FileReader(file);
       // change inputted type T and inputted creator to change parsed row type
-      Searcher searcher = new Searcher(new ArrayList<>(), headerIncluded); // CHANGED FIRST PARAM, USED TO BE READER
+      Searcher searcher =
+          new Searcher(new ArrayList<>(), headerIncluded); // CHANGED FIRST PARAM, USED TO BE READER
       List<List<String>> resultRows;
       if (args.length > 3) {
         resultRows = searcher.search(args[1], args[3]);

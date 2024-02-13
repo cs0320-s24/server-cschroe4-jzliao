@@ -23,16 +23,16 @@ import spark.Spark;
 
 public class Server {
 
-  public Server(CSVDatasource csvState, APIDatasource acsState){
+  public Server(CSVDatasource csvState, APIDatasource acsState) {
     // make the server port
     int port = 1313;
     Spark.port(port);
 
     after(
-            (request, response) -> {
-              response.header("Access-Control-Allow-Origin", "*");
-              response.header("Access-Control-Allow-Methods", "*");
-            });
+        (request, response) -> {
+          response.header("Access-Control-Allow-Origin", "*");
+          response.header("Access-Control-Allow-Methods", "*");
+        });
     List<Town> parsedData = new ArrayList<>(); // todo maybe put in catch too so no need to reassign
     try {
       FileReader reader = new FileReader("./data/census/RICityTownIncome2017-2021.csv");

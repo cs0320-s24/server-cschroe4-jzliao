@@ -1,10 +1,10 @@
 package edu.brown.cs.student;
 
-import edu.brown.cs.student.main.csvFunctions.Parser;
 import edu.brown.cs.student.main.creators.FaultyCreator;
 import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.creators.StarCreator;
 import edu.brown.cs.student.main.creators.StringCreator;
+import edu.brown.cs.student.main.csvFunctions.Parser;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import edu.brown.cs.student.main.rowObjects.Star;

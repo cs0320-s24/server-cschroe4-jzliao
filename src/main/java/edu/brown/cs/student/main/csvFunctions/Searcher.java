@@ -1,12 +1,10 @@
 package edu.brown.cs.student.main.csvFunctions;
 
-import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.exceptions.ColNotFoundException;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import edu.brown.cs.student.main.exceptions.SearchFailureException;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +27,7 @@ public class Searcher {
    */
   public Searcher(List<List<String>> rowList, Boolean headerIncluded)
       throws FactoryFailureException, MalformedDataException, IOException {
-//    Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
+    //    Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
     this.rowsToSearch = rowList;
     this.headerIncluded = headerIncluded;
   }
