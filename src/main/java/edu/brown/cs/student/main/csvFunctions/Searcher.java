@@ -1,4 +1,4 @@
-package edu.brown.cs.student.main;
+package edu.brown.cs.student.main.csvFunctions;
 
 import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.exceptions.ColNotFoundException;
@@ -22,16 +22,15 @@ public class Searcher {
    * Pass in a reader to use for parsing and indicate whether a header is included in the CSV file.
    * This method creates the parser and sets the list of rows.
    *
-   * @param reader the reader to use during parsing
    * @param headerIncluded indicates whether there is a header in the CSV or not
    * @throws FactoryFailureException if the parser cannot correctly make a row
    * @throws MalformedDataException if the given CSV data is not correctly formed
    * @throws IOException if reading from the CSV while parsing fails
    */
-  public Searcher(Reader reader, Boolean headerIncluded)
+  public Searcher(List<List<String>> rowList, Boolean headerIncluded)
       throws FactoryFailureException, MalformedDataException, IOException {
-    Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
-    this.rowsToSearch = parser.parseCSV();
+//    Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
+    this.rowsToSearch = rowList;
     this.headerIncluded = headerIncluded;
   }
 

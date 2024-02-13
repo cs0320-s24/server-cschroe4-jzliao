@@ -2,11 +2,8 @@ package edu.brown.cs.student.main.handlers;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-import edu.brown.cs.student.main.Parser;
-import edu.brown.cs.student.main.creators.ListCreator;
-import java.io.FileReader;
+
 import java.io.IOException;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

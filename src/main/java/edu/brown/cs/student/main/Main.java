@@ -3,11 +3,13 @@ package edu.brown.cs.student.main;
 import static java.lang.System.exit;
 
 import edu.brown.cs.student.main.creators.StringCreator;
+import edu.brown.cs.student.main.csvFunctions.Searcher;
 import edu.brown.cs.student.main.exceptions.ColNotFoundException;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import edu.brown.cs.student.main.exceptions.SearchFailureException;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /** The Main class of our project. This is where execution begins. */
@@ -67,7 +69,7 @@ public final class Main {
     try {
       Reader reader = new FileReader(file);
       // change inputted type T and inputted creator to change parsed row type
-      Searcher searcher = new Searcher(reader, headerIncluded);
+      Searcher searcher = new Searcher(new ArrayList<>(), headerIncluded); // CHANGED FIRST PARAM, USED TO BE READER
       List<List<String>> resultRows;
       if (args.length > 3) {
         resultRows = searcher.search(args[1], args[3]);

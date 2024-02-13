@@ -1,6 +1,6 @@
 package edu.brown.cs.student.main.datasource.csv;
 
-import edu.brown.cs.student.main.Parser;
+import edu.brown.cs.student.main.csvFunctions.Parser;
 import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.exceptions.DataNotLoadedException;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;

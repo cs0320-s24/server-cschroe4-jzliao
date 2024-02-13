@@ -1,6 +1,6 @@
 package edu.brown.cs.student;
 
-import edu.brown.cs.student.main.Parser;
+import edu.brown.cs.student.main.csvFunctions.Parser;
 import edu.brown.cs.student.main.creators.FaultyCreator;
 import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.creators.StarCreator;
