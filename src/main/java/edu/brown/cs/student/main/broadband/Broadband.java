@@ -7,14 +7,16 @@ import java.util.Date;
  * there are a few fields that you could filter on if you wanted!
  */
 public class Broadband {
-  private String stateName;
-  private String countyName;
-  private double percentOfHouseholds;
-  private Date date;
-  public Broadband() {}
+  private String name;
+  private String percent;
+
+  public Broadband(String name, String percent) {
+    this.name = name;
+    this.percent = percent;
+  }
 
   @Override
   public String toString() {
-    return "Percentage of households with broadband access in " + this.countyName + ", " + this.stateName + ": " + this.percentOfHouseholds;
+    return "Percentage of households with broadband access in " + this.name + ": " + this.percent;
   }
 }

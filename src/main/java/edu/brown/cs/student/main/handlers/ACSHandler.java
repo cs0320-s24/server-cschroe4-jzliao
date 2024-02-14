@@ -1,5 +1,7 @@
 package edu.brown.cs.student.main.handlers;
 
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.broadband.ACSAPIUtilities;
 import edu.brown.cs.student.main.broadband.Broadband;
 import spark.Request;
@@ -14,50 +16,51 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class ACSHandler implements Route {
 
+    private HashMap<String, String> stateMap;
+    private boolean stateMapFetched;
+    public ACSHandler(){
+        this.stateMapFetched = false;
+    }
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        // If you are interested in how parameters are received, try commenting out and
-        // printing these lines! Notice that requesting a specific parameter requires that parameter
-        // to be fulfilled.
-        // If you specify a queryParam, you can access it by appending ?parameterName=name to the
-        // endpoint
-        // ex. http://localhost:3232/activity?participants=num
-        Set<String> params = request.queryParams();
-        //     System.out.println(params);
         String stateName = request.queryParams("stateName");
         String countyName = request.queryParams("countyName");
-        //     System.out.println(participants);
 
         // Creates a hashmap to store the results of the request
         Map<String, Object> responseMap = new HashMap<>();
         try {
+            // get the state number map
+            if(!this.stateMapFetched){
+                this.stateMap = this.sendStateRequest();
+                this.stateMapFetched = true;
+            }
 
-            // get the state number
-            this.sendStateRequest();
+            String stateNum = this.stateMap.get(stateName.toLowerCase());
+
+            // get the county number map
+            HashMap<String, String> countyMap = this.sendCountyRequest(stateNum);
+            String countyNum = countyMap.get(countyName.toLowerCase());
 
             // Sends a request to the API and receives JSON back
-            String broadbandJson = this.sendRequest(countyName, 0); //TODO: convert stateName to corresponding int
+            String broadbandJson = this.sendBroadbandRequest(countyNum, stateNum); //TODO: convert stateName to corresponding int
             // Deserializes JSON into an Activity
             Broadband broadband = ACSAPIUtilities.deserializeBroadband(broadbandJson);
             // Adds results to the responseMap
             responseMap.put("result", "success");
             responseMap.put("broadband", broadband);
-            return responseMap;
-        } catch (Exception e) {
+            return new ACSHandler.ACSSuccessResponse(responseMap).serialize();
+        } catch (URISyntaxException| IOException | InterruptedException e) {
             e.printStackTrace();
-            // This is a relatively unhelpful exception message. An important part of this sprint will be
-            // in learning to debug correctly by creating your own informative error messages where Spark
-            // falls short.
-            responseMap.put("result", "Exception");
+            //TODO: is this verbose enough
+            return new ACSFailureResponse(e.getMessage()).serialize();
         }
-        return responseMap;
     }
 
-    private int sendStateRequest() throws URISyntaxException, IOException, InterruptedException {
+    private HashMap<String, String> sendStateRequest() throws URISyntaxException, IOException, InterruptedException {
         //https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*
         HttpRequest buildACSApiRequest =
                 HttpRequest.newBuilder()
@@ -71,30 +74,77 @@ public class ACSHandler implements Route {
                         .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
 
         String stateJson = sentStateNumResponse.body();
-        System.out.println(ACSAPIUtilities.deserializeStateNum(stateJson));
-        return 0;
+        return ACSAPIUtilities.deserializeStateNum(stateJson);
     }
 
-    private String sendRequest(String countyName, int stateNum)
-            throws URISyntaxException, IOException, InterruptedException {
-        //ex: county:*&in=state:06
+    private HashMap<String, String> sendCountyRequest(String stateNum) throws URISyntaxException, IOException, InterruptedException {
+        //https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:06
         HttpRequest buildACSApiRequest =
                 HttpRequest.newBuilder()
-                        .uri(new URI("https://api.census.gov/data/2021/acs/acs1/subject/variables?get=NAME,S2802_C03_022E&for=county:" + countyName + "&in=state:" + stateNum))
+                        .uri(new URI("https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:" + stateNum))
                         .GET()
                         .build();
-
-        // Send that API request then store the response in this variable. Note the generic type.
-        HttpResponse<String> sentBoredApiResponse =
+        HttpResponse<String> sentCountyNumResponse =
                 HttpClient.newBuilder()
                         .build()
                         .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
 
-        // What's the difference between these two lines? Why do we return the body? What is useful from
-        // the raw response (hint: how can we use the status of response)?
-        System.out.println(sentBoredApiResponse);
-        System.out.println(sentBoredApiResponse.body());
+        String countyJson = sentCountyNumResponse.body();
+        return ACSAPIUtilities.deserializeCountyNum(countyJson);
+    }
 
-        return sentBoredApiResponse.body();
+    private String sendBroadbandRequest(String countyNum, String stateNum)
+            throws URISyntaxException, IOException, InterruptedException {
+        //ex: county:*&in=state:06
+        HttpRequest buildACSApiRequest =
+                HttpRequest.newBuilder()
+                        .uri(new URI("https://api.census.gov/data/2021/acs/acs1/subject/variables?get=NAME,S2802_C03_022E&for=county:" + countyNum + "&in=state:" + stateNum))
+                        .GET()
+                        .build();
+
+        HttpResponse<String> sentACSApiResponse =
+                HttpClient.newBuilder()
+                        .build()
+                        .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
+
+//        System.out.println(sentACSApiResponse);
+//        System.out.println(sentACSApiResponse.body());
+
+        return sentACSApiResponse.body();
+    }
+
+    public record ACSSuccessResponse(String response_type, Map<String, Object> responseMap) {
+        public ACSSuccessResponse(Map<String, Object> responseMap) {
+            this("success", responseMap);
+        }
+        /**
+         * @return this response, serialized as Json
+         */
+        String serialize() {
+            try {
+                Moshi moshi = new Moshi.Builder().build();
+                JsonAdapter<ACSHandler.ACSSuccessResponse> adapter =
+                        moshi.adapter(ACSHandler.ACSSuccessResponse.class);
+                return adapter.toJson(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
+        }
+    }
+
+    /** Response object to send if someone gave a CSV that couldn't be parsed */
+    public record ACSFailureResponse(String response_type, String error_message) {
+        public ACSFailureResponse(String errorMessage) {
+            this("error", errorMessage);
+        }
+
+        /**
+         * @return this response, serialized as Json
+         */
+        String serialize() {
+            Moshi moshi = new Moshi.Builder().build();
+            return moshi.adapter(ACSHandler.ACSFailureResponse.class).toJson(this);
+        }
     }
 }
