@@ -10,10 +10,7 @@ import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
 import edu.brown.cs.student.main.datasource.csv.LocalCSVSource;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
-import edu.brown.cs.student.main.handlers.LoadHandler;
-import edu.brown.cs.student.main.handlers.SampleHandler;
-import edu.brown.cs.student.main.handlers.SearchHandler;
-import edu.brown.cs.student.main.handlers.ViewHandler;
+import edu.brown.cs.student.main.handlers.*;
 import edu.brown.cs.student.main.rowObjects.Town;
 import java.io.FileReader;
 import java.io.IOException;
@@ -47,6 +44,7 @@ public class Server {
     Spark.get("loadcsv", new LoadHandler(csvState));
     Spark.get("viewcsv", new ViewHandler(csvState));
     Spark.get("searchcsv", new SearchHandler(csvState));
+    Spark.get("broadband", new ACSHandler());
 
     Spark.init();
     Spark.awaitInitialization();

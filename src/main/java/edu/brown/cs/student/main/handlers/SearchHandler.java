@@ -34,12 +34,11 @@ public class SearchHandler implements Route {
 
       Searcher searcher = new Searcher(rowsList, dataset.hasHeader());
       List<List<String>> result;
-      if (identifier == null ){
+      if (identifier.equals("*")){
         result = searcher.search(searchTerm);
       } else {
         result = searcher.search(searchTerm, identifier);
       }
-
       Map<String, Object> responseMap = new HashMap<>();
       responseMap.put("Search Results: ", result);
       responseMap.put("Search Term: ", searchTerm);
