@@ -24,6 +24,12 @@
 
   <dependencies>
 
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>31.1-jre</version>
+    </dependency>
+
     <!--
            We use Moshi for serialization/deserialization of JSON data.
            Moshi 1.13.0 was released in December 2021.

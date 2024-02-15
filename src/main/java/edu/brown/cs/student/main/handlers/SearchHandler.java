@@ -34,7 +34,7 @@ public class SearchHandler implements Route {
 
       Searcher searcher = new Searcher(rowsList, dataset.hasHeader());
       List<List<String>> result;
-      if (identifier.equals("*")){
+      if (identifier.equals("*")) { // todo what should we do if completely empty
         result = searcher.search(searchTerm);
       } else {
         result = searcher.search(searchTerm, identifier);

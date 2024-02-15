@@ -52,7 +52,7 @@ public class Server {
     // Notice this link alone leads to a 404... Why is that?
     System.out.println("Server started at http://localhost:" + port);
   }
-
+  // TODO should we use the ACSSource instead of having the ACSHandler define the urls
   public static void main(String[] args) {
     Server server = new Server(new LocalCSVSource(), new ACSSource());
   }
