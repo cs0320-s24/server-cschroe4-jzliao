@@ -4,6 +4,8 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.broadband.ACSAPIUtilities;
 import edu.brown.cs.student.main.broadband.Broadband;
+import edu.brown.cs.student.main.exceptions.EmptyResponseException;
+import org.jetbrains.annotations.NotNull;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -53,14 +55,14 @@ public class ACSHandler implements Route {
             responseMap.put("result", "success");
             responseMap.put("broadband", broadband);
             return new ACSHandler.ACSSuccessResponse(responseMap).serialize();
-        } catch (URISyntaxException| IOException | InterruptedException e) {
+        } catch (URISyntaxException| IOException | InterruptedException| EmptyResponseException e) {
             e.printStackTrace();
             //TODO: is this verbose enough
             return new ACSFailureResponse(e.getMessage()).serialize();
         }
     }
 
-    private HashMap<String, String> sendStateRequest() throws URISyntaxException, IOException, InterruptedException {
+    private HashMap<String, String> sendStateRequest() throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
         //https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*
         HttpRequest buildACSApiRequest =
                 HttpRequest.newBuilder()
@@ -74,10 +76,13 @@ public class ACSHandler implements Route {
                         .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
 
         String stateJson = sentStateNumResponse.body();
+        if(stateJson.isEmpty()){
+            throw new EmptyResponseException("Census data not found: adjust entered parameters");
+        }
         return ACSAPIUtilities.deserializeStateNum(stateJson);
     }
 
-    private HashMap<String, String> sendCountyRequest(String stateNum) throws URISyntaxException, IOException, InterruptedException {
+    private HashMap<String, String> sendCountyRequest(String stateNum) throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
         //https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:06
         HttpRequest buildACSApiRequest =
                 HttpRequest.newBuilder()
@@ -90,11 +95,14 @@ public class ACSHandler implements Route {
                         .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
 
         String countyJson = sentCountyNumResponse.body();
+        if(countyJson.isEmpty()){
+            throw new EmptyResponseException("Census data not found: adjust entered parameters");
+        }
         return ACSAPIUtilities.deserializeCountyNum(countyJson);
     }
 
     private String sendBroadbandRequest(String countyNum, String stateNum)
-            throws URISyntaxException, IOException, InterruptedException {
+            throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
         //ex: county:*&in=state:06
         HttpRequest buildACSApiRequest =
                 HttpRequest.newBuilder()
@@ -109,7 +117,9 @@ public class ACSHandler implements Route {
 
 //        System.out.println(sentACSApiResponse);
 //        System.out.println(sentACSApiResponse.body());
-
+        if(sentACSApiResponse.body().isEmpty()){
+            throw new EmptyResponseException("Census data not found: adjust entered parameters");
+        }
         return sentACSApiResponse.body();
     }
 
