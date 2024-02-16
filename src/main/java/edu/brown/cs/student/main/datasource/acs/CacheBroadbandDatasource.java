@@ -39,7 +39,8 @@ public class CacheBroadbandDatasource implements ACSDatasource {
   public Broadband sendRequest(String stateNum, String countyName) {
       String target = countyName + "," + stateNum;
       Broadband result = this.cache.getUnchecked(target);
-      System.out.println(this.cache.stats());
+      //uncomment the below line for testing
+      //System.out.println(this.cache.stats());
       return result;
   }
 }

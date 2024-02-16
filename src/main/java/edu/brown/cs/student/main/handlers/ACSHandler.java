@@ -35,7 +35,6 @@ public class ACSHandler implements Route {
 
 
 
-  //TODO: REALLY IMPORTANT!!!! >:( Add date and time to the response map broadband
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String stateName = request.queryParams("stateName");

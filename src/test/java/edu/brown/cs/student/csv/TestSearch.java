@@ -1,4 +1,4 @@
-package edu.brown.cs.student;
+package edu.brown.cs.student.csv;
 
 import edu.brown.cs.student.main.creators.ListCreator;
 import edu.brown.cs.student.main.csvFunctions.*;

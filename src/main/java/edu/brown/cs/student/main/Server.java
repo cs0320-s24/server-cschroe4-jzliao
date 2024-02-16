@@ -40,7 +40,7 @@ public class Server {
     }
 
     // Setting up the handler for the GET /order and /activity endpoints
-    Spark.get("towns", new SampleHandler(parsedData));
+    Spark.get("towns", new SampleHandler(parsedData)); //todo: get rid of this and the file above
     Spark.get("loadcsv", new LoadHandler(csvState));
     Spark.get("viewcsv", new ViewHandler(csvState));
     Spark.get("searchcsv", new SearchHandler(csvState));
