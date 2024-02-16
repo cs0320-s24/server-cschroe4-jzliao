@@ -126,12 +126,12 @@ public class TestSearch {
    * headers
    */
   @Test
-  public void testIllegalArgument() {
+  public void testSaidNoHeaderButRequestedOne() {
     try {
       List<List<String>> rows = parseBeforeTest("./data/stars/ten-star.csv");
       Searcher searcher = new Searcher(rows, false);
       Assert.assertThrows(
-          IllegalArgumentException.class,
+          SearchFailureException.class,
           () -> {
             searcher.search("Harry Potter", "Hogwarts");
           });

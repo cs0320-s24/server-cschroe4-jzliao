@@ -3,7 +3,6 @@ package edu.brown.cs.student.main.handlers;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
-import edu.brown.cs.student.main.exceptions.DataNotLoadedException;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import java.io.IOException;
@@ -27,23 +26,24 @@ public class LoadHandler implements Route {
     String filename = request.queryParams("filename");
     String hasHeader = request.queryParams("hasHeader");
 
-    if(hasHeader == null || filename == null){
+    if (hasHeader == null || filename == null) {
       return new LoadFailureResponse("Parameters not fulfilled").serialize();
     }
 
     // TODO: test this functionality
     // setting the boolean indicating whether there is a header
     boolean header = false;
-    if (hasHeader.equals("yes") || hasHeader.equals("true")){
+    if (hasHeader.equals("yes") || hasHeader.equals("true")) {
       header = true;
-    } else if (hasHeader.equals("no") || hasHeader.equals("false")){
+    } else if (hasHeader.equals("no") || hasHeader.equals("false")) {
       header = false;
     } else {
-      return new LoadFailureResponse("Invalid hasHeader value inputted. Please enter true/false or yes/no.")
-              .serialize();
+      return new LoadFailureResponse(
+              "Invalid hasHeader value inputted. Please enter true/false or yes/no.")
+          .serialize();
     }
 
-      Map<String, Object> responseMap = new HashMap<>();
+    Map<String, Object> responseMap = new HashMap<>();
     if (!filename.contains("data/")) { // todo should this have ./ needed
       return new LoadFailureResponse("Error: file must not be outside of the /data/ directory")
           .serialize();

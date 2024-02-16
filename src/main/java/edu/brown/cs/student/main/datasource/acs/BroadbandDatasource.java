@@ -15,21 +15,24 @@ import java.util.HashMap;
 public class BroadbandDatasource implements ACSDatasource<Broadband> {
   private HashMap<String, String> stateMap;
   private boolean hasMap;
-  public BroadbandDatasource() {}
+
+  public BroadbandDatasource() {
+    this.hasMap = false;
+  }
 
   private HashMap<String, String> sendStateRequest()
-          throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
+      throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
     // https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*
     HttpRequest buildACSApiRequest =
-            HttpRequest.newBuilder()
-                    .uri(new URI("https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*"))
-                    .GET()
-                    .build();
+        HttpRequest.newBuilder()
+            .uri(new URI("https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*"))
+            .GET()
+            .build();
 
     HttpResponse<String> sentStateNumResponse =
-            HttpClient.newBuilder()
-                    .build()
-                    .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
+        HttpClient.newBuilder()
+            .build()
+            .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
 
     String stateJson = sentStateNumResponse.body();
     if (stateJson.isEmpty()) {
@@ -37,7 +40,6 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
     }
     return ACSAPIUtilities.deserializeStateNum(stateJson);
   }
-
 
   private HashMap<String, String> sendCountyRequest(String stateNum)
       throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
@@ -90,12 +92,12 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
   @Override
   public Broadband sendRequest(String stateName, String countyName)
       throws URISyntaxException, IOException, EmptyResponseException, InterruptedException {
-    //make the map if it doesn't exist yet
-    if(!this.hasMap){
+    // make the map if it doesn't exist yet
+    if (!this.hasMap) {
       this.stateMap = this.sendStateRequest();
       this.hasMap = true;
     }
-    if(!this.stateMap.containsKey(stateName.toLowerCase())){
+    if (!this.stateMap.containsKey(stateName.toLowerCase())) {
       throw new EmptyResponseException("Data not found for given state");
     }
     String stateNum = this.stateMap.get(stateName.toLowerCase());

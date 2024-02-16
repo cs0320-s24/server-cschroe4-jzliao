@@ -4,11 +4,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.broadband.ACSAPIUtilities;
-import edu.brown.cs.student.main.broadband.Broadband;
-import edu.brown.cs.student.main.datasource.acs.BroadbandDatasource;
-import edu.brown.cs.student.main.datasource.acs.CacheBroadbandDatasource;
 import edu.brown.cs.student.main.datasource.acs.ACSDatasource;
-import edu.brown.cs.student.main.datasource.acs.StateDatasource;
 import edu.brown.cs.student.main.exceptions.EmptyResponseException;
 import java.io.IOException;
 import java.net.URI;
@@ -22,46 +18,44 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class ACSHandler implements Route {
+public class ACSHandler<T> implements Route {
 
+  private ACSDatasource<T> datasource;
+  private String dataType;
 
-  private boolean stateMapFetched;
-  private ACSDatasource<Broadband> cacheACSACSDatasource;
-
-  public ACSHandler(ACSDatasource datasource) { //todo maybe take in a requester? and datasource?
-    this.stateMapFetched = false;
-    this.cacheACSACSDatasource = datasource;
+  public ACSHandler(
+      ACSDatasource datasource,
+      String dataType) { // todo maybe take in a requester? and datasource?
+    this.datasource = datasource;
+    this.dataType = dataType;
   }
-
-
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String stateName = request.queryParams("stateName");
-    String countyName = request.queryParams("countyName"); //TODO what if null?
+    String countyName = request.queryParams("countyName");
 
-    if (stateName == null){
-      return new ACSFailureResponse("Missing state parameter").serialize();
+    if (stateName == null || countyName == null) {
+      return new ACSFailureResponse("Missing one or more parameters").serialize();
     }
-    if (countyName == null){
-      return new ACSFailureResponse("Missing county parameter").serialize();
+
+    if (stateName.isEmpty() || countyName.isEmpty()) {
+      return new ACSFailureResponse("Empty parameter(s)").serialize();
     }
 
     // Creates a hashmap to store the results of the request
     Map<String, Object> responseMap = new HashMap<>();
     try {
-      Broadband broadband = this.cacheACSACSDatasource.sendRequest(stateName, countyName);
+      T data = this.datasource.sendRequest(stateName, countyName);
 
-      // Deserializes JSON into a Broadband
-      //Broadband broadband = ACSAPIUtilities.deserializeBroadband(broadbandJson);
       // Adds results to the responseMap
       responseMap.put("result", "success");
-      responseMap.put("broadband", broadband);
+      responseMap.put(this.dataType, data);
 
       return new ACSHandler.ACSSuccessResponse(responseMap).serialize();
     } catch (URISyntaxException | IOException | InterruptedException | EmptyResponseException e) {
       return new ACSFailureResponse(e.getMessage()).serialize();
-    } catch (UncheckedExecutionException e){
+    } catch (UncheckedExecutionException e) {
       return new ACSFailureResponse(e.getCause().getMessage()).serialize();
     }
   }

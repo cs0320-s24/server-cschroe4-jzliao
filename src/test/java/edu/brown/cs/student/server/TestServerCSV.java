@@ -3,15 +3,19 @@ package edu.brown.cs.student.server;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
-import edu.brown.cs.student.main.broadband.Broadband;
-import edu.brown.cs.student.main.datasource.acs.ACSDatasource;
 import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
 import edu.brown.cs.student.main.datasource.csv.LocalCSVSource;
-import edu.brown.cs.student.main.handlers.ACSHandler;
 import edu.brown.cs.student.main.handlers.LoadHandler;
 import edu.brown.cs.student.main.handlers.SearchHandler;
 import edu.brown.cs.student.main.handlers.ViewHandler;
-import edu.brown.cs.student.mocks.MockACSDatasource;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import okio.Buffer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,20 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.testng.Assert;
 import spark.Spark;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class TestServerCSV {
   private JsonAdapter<Map<String, Object>> adapter;
-  private final Type mapStringObject = Types.newParameterizedType(Map.class, String.class, Object.class);
+  private final Type mapStringObject =
+      Types.newParameterizedType(Map.class, String.class, Object.class);
 
+  /**
+   * Called once before all tests - sets up the server port
+   */
   @BeforeAll
   public static void setupOnce() {
     // Pick an arbitrary free port
@@ -41,9 +39,13 @@ public class TestServerCSV {
     // Eliminate logger spam in console for test suite
     Logger.getLogger("").setLevel(Level.WARNING); // empty name = root
   }
+
+  /**
+   * Called before each test - sets up endpoints and creates a moshi adapter
+   */
   @BeforeEach
-  public void setup(){
-    //set up the mock data source for testing w/ out sending api requests every time
+  public void setup() {
+    // set up the mock data source for testing w/ out sending api requests every time
     CSVDatasource csvState = new LocalCSVSource();
     Spark.get("loadcsv", new LoadHandler(csvState));
     Spark.get("viewcsv", new ViewHandler(csvState));
@@ -54,6 +56,9 @@ public class TestServerCSV {
     this.adapter = moshi.adapter(this.mapStringObject);
   }
 
+  /**
+   * Called after each test and stops listening at endpoints
+   */
   @AfterEach
   public void teardown() {
     // Gracefully stop Spark listening on both endpoints after each test
@@ -63,38 +68,51 @@ public class TestServerCSV {
     Spark.awaitStop();
   }
 
-
+  /**
+   * Makes API call to local host at port based on passed in string representing the call
+   * @param apiCall endpoint and parameters of the api call
+   * @return the client connection
+   * @throws IOException
+   */
   private HttpURLConnection tryRequest(String apiCall) throws IOException {
-    URL requestURL = new URL("http://localhost:"+ Spark.port()+"/"+apiCall);
+    URL requestURL = new URL("http://localhost:" + Spark.port() + "/" + apiCall);
     HttpURLConnection clientConnection = (HttpURLConnection) requestURL.openConnection();
-    //clientConnection.setRequestProperty("Content-Type", "application/json");
-    //clientConnection.setRequestProperty("Accept", "application/json");
     clientConnection.setRequestMethod("GET");
 
     clientConnection.connect();
     return clientConnection;
   }
+
+  /**
+   * Basic tests for LoadHandler expecting valid responses (inputs all valid hasHeader options)
+   * @throws IOException
+   */
   @Test
   public void testLoadHandlerBasic() throws IOException {
     // basic case
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // changing hasHeader inputs:
     // "true"
-    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=true");
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=true");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
     // "no"
-    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=no");
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=no");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
     // "false"
-    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=false");
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=false");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
@@ -102,67 +120,103 @@ public class TestServerCSV {
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests LoadHandler when improper hasHeader parameters are inputted (not specified and nonsense input)
+   * @throws IOException
+   */
   @Test
   public void testImproperParametersLoad() throws IOException {
-    // improper parameters
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv");
+    // no parameters
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
 
     // has header in improper format
-    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=dddads");
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=dddads");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
-    Assert.assertEquals("Invalid hasHeader value inputted. Please enter true/false or yes/no.", response.get("error_message"));
+    Assert.assertEquals(
+        "Invalid hasHeader value inputted. Please enter true/false or yes/no.",
+        response.get("error_message"));
 
     clientConnection.disconnect();
   }
+
+  /**
+   * Tests LoadHandler when no filename was inputted
+   * @throws IOException
+   */
   @Test
   public void testNoFileLoad() throws IOException {
     // no file inputted
     HttpURLConnection clientConnection = tryRequest("loadcsv?filename=&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
     clientConnection.disconnect();
   }
 
+  /**
+   * Test LoadHandler when inputted filename is outside the data directory
+   * @throws IOException
+   */
   @Test
   public void testOutsideDataFolderLoad() throws IOException {
     // file not in data folder
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=test/testingUnreachableData/unreachable.txt&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=test/testingUnreachableData/unreachable.txt&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("error", response.get("response_type")); //todo should I check the message?
-    Assert.assertEquals(response.get("error_message"), "Error: file must not be outside of the /data/ directory");
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+    Assert.assertEquals(
+        response.get("error_message"), "Error: file must not be outside of the /data/ directory");
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests LoadHandler when inputted file does not exist
+   * @throws IOException
+   */
   @Test
   public void testFileNotFoundLoad() throws IOException {
     // file not found
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/imNotHereTeehee.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/imNotHereTeehee.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
-    Assert.assertEquals(response.get("error_message"), "data/census/imNotHereTeehee.csv (No such file or directory)");
+    Assert.assertEquals(
+        response.get("error_message"),
+        "data/census/imNotHereTeehee.csv (No such file or directory)");
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests that LoadHandler is able to reload when called again with a different file
+   * @throws IOException
+   */
   @Test
   public void testLoadTwoItems() throws IOException {
     // loading two items + check if updated
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
-    //TODO i don't like this casting still :( look to livecode not about poorly designed api
     Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
     Assert.assertEquals(responseMap.get("filename"), "data/census/RICityTownIncome2017-2021.csv");
 
-    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
@@ -171,55 +225,93 @@ public class TestServerCSV {
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests LoadHandler when no parameters at all are specified
+   * @throws IOException
+   */
   @Test
   public void testNoParametersSpecifiedLoad() throws IOException {
     // load without parameters specified at all
     HttpURLConnection clientConnection = tryRequest("loadcsv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("error",response.get("response_type"));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
 
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests successful calls to viewcsv by making sure outputted data includes the correct info, even after reloading
+   * @throws IOException
+   */
   @Test
   public void testViewHandler() throws IOException {
     // basic case
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     clientConnection = tryRequest("viewcsv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String,Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("success",response.get("response_type"));
-
-    //todo:check that its from the correct CSV
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
+    Map<String, Object> csvData = (Map<String, Object>) responseMap.get("CSV data");
+    List<List<String>> dataset = (List<List<String>>) csvData.get("dataset");
+    Assert.assertEquals(dataset.get(0).get(0), "City/Town");
+    Assert.assertEquals(dataset.get(1).get(0), "Rhode Island");
+    Assert.assertEquals(dataset.get(1).get(1), "74,489.00");
 
     // view after re-loading, make sure it changes
-    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    //call load again and asser success
+    clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("success",response.get("response_type"));
-    //todo:check that its from the correct CSV. THIS IS WHAT we need to work on
+    Assert.assertEquals("success", response.get("response_type"));
+
+    //call view again
+    clientConnection = tryRequest("viewcsv");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+
+    responseMap = (Map<String, Object>) response.get("responseMap");
+    csvData = (Map<String, Object>) responseMap.get("CSV data");
+    dataset = (List<List<String>>) csvData.get("dataset");
+    //check new viewing
+    Assert.assertEquals(dataset.get(0).get(0), "IPEDS Race");
+    Assert.assertEquals(dataset.get(1).get(0), "Asian");
 
     clientConnection.disconnect();
   }
 
+  /**
+   * Tests a call to viewcsv without calling loadcsv first
+   * @throws IOException
+   */
   @Test
   public void testViewWithoutLoad() throws IOException {
     // view without loading
     HttpURLConnection clientConnection = tryRequest("viewcsv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String,Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("error",response.get("response_type"));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
   }
 
-
-
+  /**
+   * Tests cases of calls to searchcsv: a basic successful search, a basic unsuccessful search, and a search
+   * without an identifier
+   * @throws IOException
+   */
   @Test
   public void testSearchHandler() throws IOException {
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // basic case
@@ -229,7 +321,8 @@ public class TestServerCSV {
     Assert.assertEquals("success", response.get("response_type"));
     Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
     List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
-    //["White","2020","2020","217156","Brown University", "691", "brown-university", "0.223552248", "Men", "1"]
+    // ["White","2020","2020","217156","Brown University", "691", "brown-university", "0.223552248",
+    // "Men", "1"]
     Assert.assertEquals(searchResults.get(0).get(0), "White");
 
     // search term not found
@@ -239,28 +332,39 @@ public class TestServerCSV {
     Assert.assertEquals("error", response.get("response_type"));
 
     // search without identifier
-    clientConnection = tryRequest("searchcsv?searchTerm=American%20Indian%20or%20Alaska%20Native&identifier=*");
+    clientConnection =
+        tryRequest("searchcsv?searchTerm=American%20Indian%20or%20Alaska%20Native&identifier=*");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
-
   }
 
+  /**
+   * Tests a call to searchcsv without a call to loadcsv first
+   * @throws IOException
+   */
   @Test
   public void testSearchWithoutLoading() throws IOException {
     // search without loading
     HttpURLConnection clientConnection = tryRequest("searchcsv?searchTerm=White&identifier=*");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
   }
 
+  /**
+   * Tests searchcsv when identifier is empty
+   * @throws IOException
+   */
   @Test
-  public void testNoSearchIdentifier() throws IOException{
+  public void testNoSearchIdentifier() throws IOException {
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search without identifier
@@ -271,13 +375,20 @@ public class TestServerCSV {
     Assert.assertEquals("Please input all parameter values", response.get("error_message"));
   }
 
+  /**
+   * Tests searchcsv with column number identifiers - tests a valid col num, a too small col num, and a too large
+   * col num
+   * @throws IOException
+   */
   @Test
-  public void testColNum() throws IOException{
+  public void testColNum() throws IOException {
 
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search with col num
@@ -304,12 +415,18 @@ public class TestServerCSV {
     Assert.assertEquals("Column index invalid", response.get("error_message"));
   }
 
+  /**
+   * Tests searchcsv with string identifiers. Tests a valid case, a case 
+   * @throws IOException
+   */
   @Test
-  public void testStringCol() throws IOException{
+  public void testStringCol() throws IOException {
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search with string col name
@@ -341,11 +458,13 @@ public class TestServerCSV {
   }
 
   @Test
-  public void testNoHeader() throws IOException{
+  public void testNoHeader() throws IOException {
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=false");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=false");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search with String identifier but hasHeader = false (should error)
@@ -353,7 +472,8 @@ public class TestServerCSV {
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
-    Assert.assertEquals("Header name given but indicated no header present", response.get("error_message"));
+    Assert.assertEquals(
+        "Header name given but indicated no header present", response.get("error_message"));
 
     // search with int identifier but hasHeader = false (should still work)
     clientConnection = tryRequest("searchcsv?searchTerm=2&identifier=9");
@@ -380,12 +500,14 @@ public class TestServerCSV {
     // search case when it should output >1 row
 
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
-    //make the search
+    // make the search
     clientConnection = tryRequest("searchcsv?searchTerm=Brown%20University&identifier=*");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
@@ -393,18 +515,19 @@ public class TestServerCSV {
     Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
     List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
     Assert.assertEquals(searchResults.size(), 16);
-    //Assert.assertEquals(searchResults.get(0).get(5), "235");
-    //Assert.assertEquals(searchResults.get(1).get(5), "95");
-    //todo assert the right number of elements returned
+    // Assert.assertEquals(searchResults.get(0).get(5), "235");
+    // Assert.assertEquals(searchResults.get(1).get(5), "95");
+    // todo assert the right number of elements returned
   }
 
-
   @Test
-  public void testIdentifierResult() throws IOException{
+  public void testIdentifierResult() throws IOException {
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search case where identifier makes a difference
@@ -419,11 +542,13 @@ public class TestServerCSV {
   }
 
   @Test
-  public void testNoParams() throws IOException{
+  public void testNoParams() throws IOException {
     // loading csv to be used in test
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    HttpURLConnection clientConnection =
+        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Map<String, Object> response =
+        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
     // search without parameters specified at all

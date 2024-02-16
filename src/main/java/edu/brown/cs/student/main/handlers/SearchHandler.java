@@ -28,9 +28,9 @@ public class SearchHandler implements Route {
     String searchTerm = request.queryParams("searchTerm");
     String identifier = request.queryParams("identifier");
 
-    if (searchTerm == null || identifier == null){
+    if (searchTerm == null || identifier == null) {
       return new SearchFailureResponse("Parameters not fulfilled").serialize();
-    } else if (searchTerm.isEmpty() || identifier.isEmpty()){
+    } else if (searchTerm.isEmpty() || identifier.isEmpty()) {
       return new SearchFailureResponse("Please input all parameter values").serialize();
     }
 

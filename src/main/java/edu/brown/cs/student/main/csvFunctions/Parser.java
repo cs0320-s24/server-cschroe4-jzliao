@@ -56,6 +56,10 @@ public class Parser<T> {
       String[] rowArray = regexSplitCSVRow.split(line);
       List<String> row = Arrays.asList(rowArray);
 
+      for (int i = 0; i<row.size(); i++) {
+        row.set(i,row.get(i).replaceAll("^\"|\"$", ""));
+      }
+
       // check data validity
       if (length == -1) {
         length = row.size();
