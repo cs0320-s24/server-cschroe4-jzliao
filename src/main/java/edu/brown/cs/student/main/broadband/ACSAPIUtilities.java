@@ -3,6 +3,7 @@ package edu.brown.cs.student.main.broadband;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ACSAPIUtilities {
    * @param jsonBroadband
    * @return
    */
-  public static Broadband deserializeBroadband(String jsonBroadband) throws IOException {
+  public static Broadband deserializeBroadband(String jsonBroadband, Date date) throws IOException {
     // Initializes Moshi
     Moshi moshi = new Moshi.Builder().build();
 
@@ -29,9 +30,7 @@ public class ACSAPIUtilities {
     String name = countyInfo.get(1).get(0);
     String percentage = countyInfo.get(1).get(1);
 
-    Broadband broadband = new Broadband(name, percentage);
-
-    return broadband;
+    return new Broadband(name, percentage, date.toString());
   }
 
   public static HashMap<String, String> deserializeStateNum(String jsonString) throws IOException {

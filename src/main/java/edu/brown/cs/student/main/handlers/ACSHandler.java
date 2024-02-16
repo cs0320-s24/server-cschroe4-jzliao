@@ -1,12 +1,14 @@
 package edu.brown.cs.student.main.handlers;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.broadband.ACSAPIUtilities;
 import edu.brown.cs.student.main.broadband.Broadband;
-import edu.brown.cs.student.main.caching.ACSRequester;
-import edu.brown.cs.student.main.caching.CacheACSRequester;
-import edu.brown.cs.student.main.caching.Requester;
+import edu.brown.cs.student.main.datasource.acs.BroadbandDatasource;
+import edu.brown.cs.student.main.datasource.acs.CacheBroadbandDatasource;
+import edu.brown.cs.student.main.datasource.acs.ACSDatasource;
+import edu.brown.cs.student.main.datasource.acs.StateDatasource;
 import edu.brown.cs.student.main.exceptions.EmptyResponseException;
 import java.io.IOException;
 import java.net.URI;
@@ -22,14 +24,16 @@ import spark.Route;
 
 public class ACSHandler implements Route {
 
-  private HashMap<String, String> stateMap;
-  private boolean stateMapFetched;
-  private Requester cacheACSRequester;
 
-  public ACSHandler() { //todo maybe take in a requester?
+  private boolean stateMapFetched;
+  private ACSDatasource<Broadband> cacheACSACSDatasource;
+
+  public ACSHandler(ACSDatasource datasource) { //todo maybe take in a requester? and datasource?
     this.stateMapFetched = false;
-    this.cacheACSRequester = new CacheACSRequester(new ACSRequester());
+    this.cacheACSACSDatasource = datasource;
   }
+
+
 
   //TODO: REALLY IMPORTANT!!!! >:( Add date and time to the response map broadband
   @Override
@@ -40,39 +44,20 @@ public class ACSHandler implements Route {
     // Creates a hashmap to store the results of the request
     Map<String, Object> responseMap = new HashMap<>();
     try {
-      // get the state number map
-      if (!this.stateMapFetched) {
-        this.stateMap = this.sendStateRequest();
-        this.stateMapFetched = true;
-      }
+      Broadband broadband = this.cacheACSACSDatasource.sendRequest(stateName, countyName);
 
-      String stateNum = this.stateMap.get(stateName.toLowerCase());
-
-//      // todo this is where we diverge
-//      // get the county number map
-//
-//      HashMap<String, String> countyMap = this.sendCountyRequest(stateNum);
-//      String countyNum = countyMap.get(countyName.toLowerCase());
-//
-//      // Sends a request to the API and receives JSON back
-//      String broadbandJson = this.sendBroadbandRequest(countyNum, stateNum);
-//      // TODO reconverges
-
-
-      String broadbandJson = this.cacheACSRequester.sendRequest(stateNum, countyName);
-
-      // Deserializes JSON into an Activity
-      Broadband broadband = ACSAPIUtilities.deserializeBroadband(broadbandJson);
+      // Deserializes JSON into a Broadband
+      //Broadband broadband = ACSAPIUtilities.deserializeBroadband(broadbandJson);
       // Adds results to the responseMap
       responseMap.put("result", "success");
       responseMap.put("broadband", broadband);
+
       return new ACSHandler.ACSSuccessResponse(responseMap).serialize();
     } catch (URISyntaxException | IOException | InterruptedException | EmptyResponseException e) {
-      e.printStackTrace();
-      // TODO: is this verbose enough
       return new ACSFailureResponse(e.getMessage()).serialize();
+    } catch (UncheckedExecutionException e){
+      return new ACSFailureResponse(e.getCause().getMessage()).serialize();
     }
-    //TODO: got a 504 server error somehow when misspelling the county for New Hampshire, Straford County
   }
 
   private HashMap<String, String> sendStateRequest()
@@ -94,56 +79,6 @@ public class ACSHandler implements Route {
       throw new EmptyResponseException("Census data not found: adjust entered parameters");
     }
     return ACSAPIUtilities.deserializeStateNum(stateJson);
-  }
-
-  private HashMap<String, String> sendCountyRequest(String stateNum)
-      throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
-    // https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:06
-    HttpRequest buildACSApiRequest =
-        HttpRequest.newBuilder()
-            .uri(
-                new URI(
-                    "https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:"
-                        + stateNum))
-            .GET()
-            .build();
-    HttpResponse<String> sentCountyNumResponse =
-        HttpClient.newBuilder()
-            .build()
-            .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
-
-    String countyJson = sentCountyNumResponse.body();
-    if (countyJson.isEmpty()) {
-      throw new EmptyResponseException("Census data not found: adjust entered parameters");
-    }
-    return ACSAPIUtilities.deserializeCountyNum(countyJson);
-  }
-
-  private String sendBroadbandRequest(String countyNum, String stateNum)
-      throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
-    // ex: county:*&in=state:06
-    HttpRequest buildACSApiRequest =
-        HttpRequest.newBuilder()
-            .uri(
-                new URI(
-                    "https://api.census.gov/data/2021/acs/acs1/subject/variables?get=NAME,S2802_C03_022E&for=county:"
-                        + countyNum
-                        + "&in=state:"
-                        + stateNum))
-            .GET()
-            .build();
-
-    HttpResponse<String> sentACSApiResponse =
-        HttpClient.newBuilder()
-            .build()
-            .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
-
-    //        System.out.println(sentACSApiResponse);
-    //        System.out.println(sentACSApiResponse.body());
-    if (sentACSApiResponse.body().isEmpty()) {
-      throw new EmptyResponseException("Census data not found: adjust entered parameters");
-    }
-    return sentACSApiResponse.body();
   }
 
   public record ACSSuccessResponse(String response_type, Map<String, Object> responseMap) {

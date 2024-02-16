@@ -1,48 +1,44 @@
-package edu.brown.cs.student.main.caching;
+package edu.brown.cs.student.main.datasource.acs;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import edu.brown.cs.student.main.broadband.Broadband;
 import edu.brown.cs.student.main.exceptions.EmptyResponseException;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class CacheACSRequester implements Requester {
+public class CacheBroadbandDatasource implements ACSDatasource {
 
-      private final LoadingCache<String, String> cache;
-      private final Requester wrappedRequester;
-
-      public CacheACSRequester(Requester wrappedRequester){
-          this.wrappedRequester = wrappedRequester;
+      private final LoadingCache<String, Broadband> cache;
+      private final ACSDatasource<Broadband> wrappedDatasource;
+      public CacheBroadbandDatasource(ACSDatasource<Broadband> wrappedDatasource, int cacheDuration){
+          this.wrappedDatasource = wrappedDatasource;
           this.cache = CacheBuilder.newBuilder() //TODO: take in a builder instead!! strategy pattern
                   .maximumSize(10)
-                  .expireAfterWrite(1, TimeUnit.MINUTES)
+                  .expireAfterWrite(cacheDuration, TimeUnit.MINUTES)
                   .recordStats()
                   .build(
                           // Strategy pattern: how should the cache behave when
                           // it's asked for something it doesn't have?
                           new CacheLoader<>() {
                               @Override
-                              public String load(String key) throws URISyntaxException, IOException, EmptyResponseException, InterruptedException {
+                              public Broadband load(String key) throws URISyntaxException, IOException, EmptyResponseException, InterruptedException {
                                   System.out.println("called load for: "+ key);
                                   // If this isn't yet present in the cache, load it:
                                   String countyName = key.split(",")[0];
                                   String stateNum = key.split(",")[1];
-                                  return wrappedRequester.sendRequest(stateNum, countyName);
+                                  return wrappedDatasource.sendRequest(stateNum, countyName);
                               }
-                          });;
+                          });
       }
 
   @Override
-  public String sendRequest(String stateNum, String countyName) {
-    // todo: find in cache
-      // "get" is designed for concurrent situations; for today, use getUnchecked:
+  public Broadband sendRequest(String stateNum, String countyName) {
       String target = countyName + "," + stateNum;
-      String result = this.cache.getUnchecked(target);
-      // For debugging and demo (would remove in a "real" version):
+      Broadband result = this.cache.getUnchecked(target);
       System.out.println(this.cache.stats());
       return result;
   }

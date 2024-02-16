@@ -4,8 +4,8 @@ import static spark.Spark.after;
 
 import edu.brown.cs.student.main.creators.TownCreator;
 import edu.brown.cs.student.main.csvFunctions.Parser;
-import edu.brown.cs.student.main.datasource.acs.ACSSource;
-import edu.brown.cs.student.main.datasource.acs.APIDatasource;
+import edu.brown.cs.student.main.datasource.acs.BroadbandDatasource;
+import edu.brown.cs.student.main.datasource.acs.CacheBroadbandDatasource;
 import edu.brown.cs.student.main.datasource.csv.CSVDatasource;
 import edu.brown.cs.student.main.datasource.csv.LocalCSVSource;
 import edu.brown.cs.student.main.exceptions.FactoryFailureException;
@@ -20,7 +20,7 @@ import spark.Spark;
 
 public class Server {
 
-  public Server(CSVDatasource csvState, APIDatasource acsState) {
+  public Server(CSVDatasource csvState) {
     // make the server port
     int port = 1313;
     Spark.port(port);
@@ -44,7 +44,7 @@ public class Server {
     Spark.get("loadcsv", new LoadHandler(csvState));
     Spark.get("viewcsv", new ViewHandler(csvState));
     Spark.get("searchcsv", new SearchHandler(csvState));
-    Spark.get("broadband", new ACSHandler());
+    Spark.get("broadband", new ACSHandler(new CacheBroadbandDatasource(new BroadbandDatasource(), 1)));
 
     Spark.init();
     Spark.awaitInitialization();
@@ -54,6 +54,6 @@ public class Server {
   }
   // TODO should we use the ACSSource instead of having the ACSHandler define the urls
   public static void main(String[] args) {
-    Server server = new Server(new LocalCSVSource(), new ACSSource());
+    Server server = new Server(new LocalCSVSource());
   }
 }
