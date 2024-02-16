@@ -30,12 +30,17 @@ public class LoadHandler implements Route {
     if(hasHeader == null || filename == null){
       return new LoadFailureResponse("Parameters not fulfilled").serialize();
     }
+
+    // TODO: test this functionality
     // setting the boolean indicating whether there is a header
     boolean header = false;
     if (hasHeader.equals("yes") || hasHeader.equals("true")){
       header = true;
     } else if (hasHeader.equals("no") || hasHeader.equals("false")){
-      
+      header = false;
+    } else {
+      return new LoadFailureResponse("Invalid hasHeader value inputted. Please enter true/false or yes/no.")
+              .serialize();
     }
 
       Map<String, Object> responseMap = new HashMap<>();

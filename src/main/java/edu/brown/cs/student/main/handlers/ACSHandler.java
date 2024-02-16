@@ -40,6 +40,13 @@ public class ACSHandler implements Route {
     String stateName = request.queryParams("stateName");
     String countyName = request.queryParams("countyName"); //TODO what if null?
 
+    if (stateName == null){
+      return new ACSFailureResponse("Missing state parameter").serialize();
+    }
+    if (countyName == null){
+      return new ACSFailureResponse("Missing county parameter").serialize();
+    }
+
     // Creates a hashmap to store the results of the request
     Map<String, Object> responseMap = new HashMap<>();
     try {

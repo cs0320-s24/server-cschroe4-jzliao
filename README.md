@@ -13,6 +13,7 @@
 # How to
 
 # Running TODOS:
+- IMPORTANT: DISCONNECT CLIENT CONNECTION IN ALL SERVERCSV TESTS
 - add headers boolean to loadcsv parameters
 - make LocalCSVSource safer (maybe do the copy thing from lecture so dataset is not exposed)
 - edit parser to trim the \

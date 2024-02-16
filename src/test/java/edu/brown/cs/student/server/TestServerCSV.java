@@ -82,6 +82,23 @@ public class TestServerCSV {
     Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
+    // changing hasHeader inputs:
+    // "true"
+    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=true");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    // "no"
+    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=no");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    // "false"
+    clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=false");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+
     clientConnection.disconnect();
   }
 
@@ -92,6 +109,14 @@ public class TestServerCSV {
     Assert.assertEquals(200, clientConnection.getResponseCode());
     Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
+
+    // has header in improper format
+    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=dddads");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+    Assert.assertEquals("Invalid hasHeader value inputted. Please enter true/false or yes/no.", response.get("error_message"));
+
     clientConnection.disconnect();
   }
   @Test
@@ -153,6 +178,7 @@ public class TestServerCSV {
     Assert.assertEquals(200, clientConnection.getResponseCode());
     Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error",response.get("response_type"));
+
     clientConnection.disconnect();
   }
 
@@ -366,6 +392,7 @@ public class TestServerCSV {
     Assert.assertEquals("success", response.get("response_type"));
     Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
     List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
+    Assert.assertEquals(searchResults.size(), 16);
     //Assert.assertEquals(searchResults.get(0).get(5), "235");
     //Assert.assertEquals(searchResults.get(1).get(5), "95");
     //todo assert the right number of elements returned
@@ -373,10 +400,44 @@ public class TestServerCSV {
 
 
   @Test
-  public void testIdentifierResult(){
+  public void testIdentifierResult() throws IOException{
+    // loading csv to be used in test
+    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+
     // search case where identifier makes a difference
+    // TODO: reconsider if this test case is necessary (ignore code below)
+    clientConnection = tryRequest("searchcsv?searchTerm=Brown%20University&identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
+    List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
+    Assert.assertEquals(searchResults.size(), 16);
   }
 
+  @Test
+  public void testNoParams() throws IOException{
+    // loading csv to be used in test
+    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
 
     // search without parameters specified at all
+    // no search term
+    clientConnection = tryRequest("searchcsv?identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+    Assert.assertEquals("Parameters not fulfilled", response.get("error_message"));
+    // no identifier
+    clientConnection = tryRequest("searchcsv?searchTerm=test");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+    Assert.assertEquals("Parameters not fulfilled", response.get("error_message"));
+  }
 }

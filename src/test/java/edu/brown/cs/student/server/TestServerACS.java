@@ -5,6 +5,8 @@ import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 import edu.brown.cs.student.main.broadband.Broadband;
 import edu.brown.cs.student.main.datasource.acs.ACSDatasource;
+import edu.brown.cs.student.main.datasource.acs.BroadbandDatasource;
+import edu.brown.cs.student.main.datasource.acs.CacheBroadbandDatasource;
 import edu.brown.cs.student.main.handlers.ACSHandler;
 import edu.brown.cs.student.mocks.MockACSDatasource;
 import org.junit.jupiter.api.AfterEach;
@@ -29,8 +31,6 @@ public class TestServerACS {
   private JsonAdapter<ACSHandler.ACSSuccessResponse> acsSuccessAdapter;
   private JsonAdapter<Broadband> broadBandAdapter;
   private final Type mapStringObject = Types.newParameterizedType(Map.class, String.class, Object.class);
-
-
 
   @BeforeAll
   public static void setupOnce() {
@@ -61,6 +61,19 @@ public class TestServerACS {
     // Gracefully stop Spark listening on both endpoints after each test
     Spark.unmap("broadband");
     Spark.awaitStop();
+  }
+
+  /**
+   * helper method that sets up a handler and adapters using the real cached datasource
+   */
+  public void setupACS(){
+    // teardown setup from BeforeAll
+    Spark.unmap("broadband");
+    Spark.awaitStop();
+
+    ACSDatasource<Broadband> cacheDatasource = new CacheBroadbandDatasource(new BroadbandDatasource(), 1);
+    Spark.get("broadband", new ACSHandler(cacheDatasource));
+    Spark.awaitInitialization();
   }
 
   private HttpURLConnection tryRequest(String apiCall) throws IOException {
@@ -135,8 +148,18 @@ public class TestServerACS {
   }
 
   @Test
-  public void testWrongCounty() {
+  public void testWrongCounty() throws IOException{
+    // TODO: figure out how to use mock datasource in cases like this that require api info
+
     // empty string
+    HttpURLConnection clientConnection = tryRequest("broadband?stateName=Connecticut&countyName=");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String,Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+    Assert.assertEquals("Data not found for given county", response.get("error_message"));
+
+
+    clientConnection.disconnect();
 
     // county does not exist
   }
@@ -151,5 +174,9 @@ public class TestServerACS {
   @Test
   public void testNoParams() {
     // no parameters specified at all
+
+    // no state parameter
+
+    // no county parameter
   }
 }
