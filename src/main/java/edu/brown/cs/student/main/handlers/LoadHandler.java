@@ -31,7 +31,12 @@ public class LoadHandler implements Route {
       return new LoadFailureResponse("Parameters not fulfilled").serialize();
     }
     // setting the boolean indicating whether there is a header
-    boolean header = hasHeader.equals("yes"); //todo what if this is not yes or no??
+    boolean header = false;
+    if (hasHeader.equals("yes") || hasHeader.equals("true")){
+      header = true;
+    } else if (hasHeader.equals("no") || hasHeader.equals("false")){
+      
+    }
 
       Map<String, Object> responseMap = new HashMap<>();
     if (!filename.contains("data/")) { // todo should this have ./ needed

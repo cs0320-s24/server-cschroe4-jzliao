@@ -75,7 +75,7 @@ public class Searcher {
     } else {
       // col is the header name
       if (!this.headerIncluded) {
-        throw new IllegalArgumentException("Header name given but indicated no header present");
+        throw new SearchFailureException("Header name given but indicated no header present");
       }
       List<String> headers = this.rowsToSearch.get(0);
       colNum = this.findColIndex(headers, col);
@@ -131,6 +131,6 @@ public class Searcher {
       }
       index++;
     }
-    throw new ColNotFoundException("Column not found");
+    throw new ColNotFoundException("Column index invalid");
   }
 }
