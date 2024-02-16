@@ -40,8 +40,8 @@ public class SearchHandler implements Route {
         result = searcher.search(searchTerm, identifier);
       }
       Map<String, Object> responseMap = new HashMap<>();
-      responseMap.put("Search Results: ", result);
-      responseMap.put("Search Term: ", searchTerm);
+      responseMap.put("Search Results", result);
+      responseMap.put("Search Term", searchTerm);
       return new SearchSuccessResponse(responseMap).serialize();
     } catch (SearchFailureException | DataNotLoadedException | ColNotFoundException e) {
       return new SearchFailureResponse(e.getMessage()).serialize();

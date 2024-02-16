@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -132,15 +134,19 @@ public class TestServerCSV {
   @Test
   public void testViewHandler() throws IOException {
     // basic case
-    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv");
+    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/RICityTownIncome2017-2021.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     clientConnection = tryRequest("viewcsv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String,Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success",response.get("response_type"));
     //todo:check that its from the correct CSV
 
     // view after re-loading, make sure it changes
-    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv");
+    clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success",response.get("response_type"));
     //todo:check that its from the correct CSV. THIS IS WHAT we need to work on
 
     clientConnection.disconnect();
@@ -158,12 +164,58 @@ public class TestServerCSV {
 
 
   @Test
-  public void testSearchHandler() {
-    // basic case
+  public void testSearchHandler() throws IOException {
+    HttpURLConnection clientConnection = tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
 
-    // search without loading
+    // basic case
+    clientConnection = tryRequest("searchcsv?searchTerm=White&identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
+    List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
+    //["White","2020","2020","217156","Brown University", "691", "brown-university", "0.223552248", "Men", "1"]
+    Assert.assertEquals(searchResults.get(0).get(0), "White");
 
     // search term not found
+    clientConnection = tryRequest("searchcsv?searchTerm=HindANDSeek&identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+
+    // search without identifier
+    clientConnection = tryRequest("searchcsv?searchTerm=American%20Indian%20or%20Alaska%20Native&identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+
+  }
+
+  @Test
+  public void testSearchWithSpaces() throws IOException {
+    //search term has spaces
+    HttpURLConnection clientConnection = tryRequest("searchcsv?searchTerm=American Indian or Alaska Native&identifier=*");
+    //this is crashing it!! Works when converted to American%20Indian%20or%20Alaska%20Native
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("success", response.get("response_type"));
+    Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
+    List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
+    //["White","2020","2020","217156","Brown University", "691", "brown-university", "0.223552248", "Men", "1"]
+    Assert.assertEquals(searchResults.get(0).get(0), "American Indian or Alaska Native");
+  }
+
+  @Test
+  public void TestSearchWithoutLoading() throws IOException {
+    // search without loading
+    HttpURLConnection clientConnection = tryRequest("searchcsv?searchTerm=White&identifier=*");
+    Assert.assertEquals(200, clientConnection.getResponseCode());
+    Map<String, Object> response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
+    Assert.assertEquals("error", response.get("response_type"));
+  }
 
     // search without identifier
 
@@ -181,5 +233,4 @@ public class TestServerCSV {
     // search case where identifier makes a difference
 
     // search without parameters specified at all
-  }
 }

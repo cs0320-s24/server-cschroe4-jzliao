@@ -38,7 +38,7 @@ public class ACSHandler implements Route {
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String stateName = request.queryParams("stateName");
-    String countyName = request.queryParams("countyName");
+    String countyName = request.queryParams("countyName"); //TODO what if null?
 
     // Creates a hashmap to store the results of the request
     Map<String, Object> responseMap = new HashMap<>();
