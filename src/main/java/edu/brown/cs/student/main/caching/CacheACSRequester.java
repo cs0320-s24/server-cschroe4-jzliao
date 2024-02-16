@@ -17,7 +17,7 @@ public class CacheACSRequester implements Requester {
 
       public CacheACSRequester(Requester wrappedRequester){
           this.wrappedRequester = wrappedRequester;
-          this.cache = CacheBuilder.newBuilder()
+          this.cache = CacheBuilder.newBuilder() //TODO: take in a builder instead!! strategy pattern
                   .maximumSize(10)
                   .expireAfterWrite(1, TimeUnit.MINUTES)
                   .recordStats()
@@ -41,9 +41,9 @@ public class CacheACSRequester implements Requester {
     // todo: find in cache
       // "get" is designed for concurrent situations; for today, use getUnchecked:
       String target = countyName + "," + stateNum;
-      String result = cache.getUnchecked(target);
+      String result = this.cache.getUnchecked(target);
       // For debugging and demo (would remove in a "real" version):
-      System.out.println(cache.stats());
+      System.out.println(this.cache.stats());
       return result;
   }
 }

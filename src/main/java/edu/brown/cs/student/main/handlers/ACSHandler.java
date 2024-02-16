@@ -24,9 +24,11 @@ public class ACSHandler implements Route {
 
   private HashMap<String, String> stateMap;
   private boolean stateMapFetched;
+  private Requester cacheACSRequester;
 
-  public ACSHandler() {
+  public ACSHandler() { //todo maybe take in a requester?
     this.stateMapFetched = false;
+    this.cacheACSRequester = new CacheACSRequester(new ACSRequester());
   }
 
   //TODO: REALLY IMPORTANT!!!! >:( Add date and time to the response map broadband
@@ -56,8 +58,8 @@ public class ACSHandler implements Route {
 //      String broadbandJson = this.sendBroadbandRequest(countyNum, stateNum);
 //      // TODO reconverges
 
-      Requester cacheACSRequester = new CacheACSRequester(new ACSRequester());
-      String broadbandJson = cacheACSRequester.sendRequest(stateNum, countyName);
+
+      String broadbandJson = this.cacheACSRequester.sendRequest(stateNum, countyName);
 
       // Deserializes JSON into an Activity
       Broadband broadband = ACSAPIUtilities.deserializeBroadband(broadbandJson);
@@ -70,6 +72,7 @@ public class ACSHandler implements Route {
       // TODO: is this verbose enough
       return new ACSFailureResponse(e.getMessage()).serialize();
     }
+    //TODO: got a 504 server error somehow when misspelling the county for New Hampshire, Straford County
   }
 
   private HashMap<String, String> sendStateRequest()
