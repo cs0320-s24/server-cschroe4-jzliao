@@ -6,8 +6,8 @@
 ### Project Name: Server
 
 ### Team members:
-- Caden Schroeder (cschroe4): Estimated ___ hours spent on project
-- Jennifer Liao (jliao): Estimated ___ hours spent on project
+- Caden Schroeder (cschroe4): Estimated 20 hours spent on project
+- Jennifer Liao (jliao): Estimated 20 hours spent on project
 ### Link to Repo:
 - https://github.com/cs0320-s24/server-cschroe4-jzliao
 
