@@ -48,18 +48,17 @@ public class CacheBroadbandDatasource implements ACSDatasource {
   }
 
   public boolean inCache(String key, Broadband broadband) throws ExecutionException {
-      if(!this.cache.asMap().containsKey(key)){
-          return false;
-      }
-      return this.cache.asMap().get(key).equals(broadband);
-
+    if (!this.cache.asMap().containsKey(key)) {
+      return false;
+    }
+    return this.cache.asMap().get(key).equals(broadband);
   }
 
-  public Map<String, Long> getStatsMap(){
-      Map<String,Long> statsMap = new HashMap<>();
-      statsMap.put("hitCount", this.cache.stats().hitCount());
-      statsMap.put("missCount", this.cache.stats().missCount());
-      statsMap.put("evictionCount", this.cache.stats().evictionCount());
-      return statsMap;
+  public Map<String, Long> getStatsMap() {
+    Map<String, Long> statsMap = new HashMap<>();
+    statsMap.put("hitCount", this.cache.stats().hitCount());
+    statsMap.put("missCount", this.cache.stats().missCount());
+    statsMap.put("evictionCount", this.cache.stats().evictionCount());
+    return statsMap;
   }
 }

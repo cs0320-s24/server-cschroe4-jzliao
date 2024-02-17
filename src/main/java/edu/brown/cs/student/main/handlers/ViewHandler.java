@@ -11,15 +11,15 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-/**
- * This class dictates how calls to viewcsv are handled
- */
+/** This class dictates how calls to viewcsv are handled */
 public class ViewHandler implements Route {
 
   private CSVDatasource state;
 
   /**
-   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been parsed yet
+   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been
+   * parsed yet
+   *
    * @param state
    */
   public ViewHandler(CSVDatasource state) {
@@ -28,6 +28,7 @@ public class ViewHandler implements Route {
 
   /**
    * Display the parsed data stored in the datasource
+   *
    * @param request
    * @param response
    * @return a Response object indicating if the view was successful or not
@@ -48,6 +49,7 @@ public class ViewHandler implements Route {
 
   /**
    * Response object representing a successful load
+   *
    * @param response_type
    * @param responseMap
    */

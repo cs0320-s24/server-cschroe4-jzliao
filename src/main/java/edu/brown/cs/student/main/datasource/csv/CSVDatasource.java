@@ -5,9 +5,7 @@ import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import java.io.IOException;
 
-/**
- * Interface for a datasource taken in by csv handlers
- */
+/** Interface for a datasource taken in by csv handlers */
 public interface CSVDatasource {
   /**
    * @return the dataset stored
@@ -17,6 +15,7 @@ public interface CSVDatasource {
 
   /**
    * parses dataset stored in file passed in
+   *
    * @param filename
    * @param hasHeader
    * @throws MalformedDataException

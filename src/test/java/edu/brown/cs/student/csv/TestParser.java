@@ -40,7 +40,7 @@ public class TestParser {
       Parser<List<String>> parser = new Parser<>(reader, new ListCreator());
       List<List<String>> rows = parser.parseCSV();
       Assert.assertEquals(rows.get(1).get(0), "Rhode Island");
-      Assert.assertEquals(rows.get(5).get(1), "\"40,235.00\"");
+      Assert.assertEquals(rows.get(5).get(1), "40,235.00");
     } catch (FileNotFoundException e) {
       System.out.println("failed to open file");
       Assert.fail();

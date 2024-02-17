@@ -15,15 +15,15 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-/**
- * This class dictats how calls to searchcsv are handled.
- */
+/** This class dictats how calls to searchcsv are handled. */
 public class SearchHandler implements Route {
 
   private CSVDatasource state;
 
   /**
-   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been parsed yet
+   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been
+   * parsed yet
+   *
    * @param state
    */
   public SearchHandler(CSVDatasource state) {
@@ -31,8 +31,9 @@ public class SearchHandler implements Route {
   }
 
   /**
-   * Uses parameters from the request to properly search the data stored in the datasource. Adds the search results
-   * to the Response object and returns the said Response.
+   * Uses parameters from the request to properly search the data stored in the datasource. Adds the
+   * search results to the Response object and returns the said Response.
+   *
    * @param request
    * @param response
    * @return Response object describing the success of the search
@@ -71,6 +72,7 @@ public class SearchHandler implements Route {
 
   /**
    * Response object representing a successful load
+   *
    * @param response_type
    * @param responseMap
    */

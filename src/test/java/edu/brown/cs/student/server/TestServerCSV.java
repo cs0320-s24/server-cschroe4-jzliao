@@ -25,17 +25,15 @@ import org.testng.Assert;
 import spark.Spark;
 
 /**
- * Tests server functions relating to our CSV API. Essentially tests LoadHandler, SearchHandler, and ViewHandler.
+ * Tests server functions relating to our CSV API. Essentially tests LoadHandler, SearchHandler, and
+ * ViewHandler.
  */
-
 public class TestServerCSV {
   private JsonAdapter<Map<String, Object>> adapter;
   private final Type mapStringObject =
       Types.newParameterizedType(Map.class, String.class, Object.class);
 
-  /**
-   * Called once before all tests - sets up the server port
-   */
+  /** Called once before all tests - sets up the server port */
   @BeforeAll
   public static void setupOnce() {
     // Pick an arbitrary free port
@@ -44,9 +42,7 @@ public class TestServerCSV {
     Logger.getLogger("").setLevel(Level.WARNING); // empty name = root
   }
 
-  /**
-   * Called before each test - sets up endpoints and creates a moshi adapter
-   */
+  /** Called before each test - sets up endpoints and creates a moshi adapter */
   @BeforeEach
   public void setup() {
     // set up the mock data source for testing w/ out sending api requests every time
@@ -60,9 +56,7 @@ public class TestServerCSV {
     this.adapter = moshi.adapter(this.mapStringObject);
   }
 
-  /**
-   * Called after each test and stops listening at endpoints
-   */
+  /** Called after each test and stops listening at endpoints */
   @AfterEach
   public void teardown() {
     // Gracefully stop Spark listening on both endpoints after each test
@@ -74,6 +68,7 @@ public class TestServerCSV {
 
   /**
    * Makes API call to local host at port based on passed in string representing the call
+   *
    * @param apiCall endpoint and parameters of the api call
    * @return the client connection
    * @throws IOException
@@ -89,6 +84,7 @@ public class TestServerCSV {
 
   /**
    * Basic tests for LoadHandler expecting valid responses (inputs all valid hasHeader options)
+   *
    * @throws IOException
    */
   @Test
@@ -125,7 +121,9 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests LoadHandler when improper hasHeader parameters are inputted (not specified and nonsense input)
+   * Tests LoadHandler when improper hasHeader parameters are inputted (not specified and nonsense
+   * input)
+   *
    * @throws IOException
    */
   @Test
@@ -153,6 +151,7 @@ public class TestServerCSV {
 
   /**
    * Tests LoadHandler when no filename was inputted
+   *
    * @throws IOException
    */
   @Test
@@ -168,6 +167,7 @@ public class TestServerCSV {
 
   /**
    * Test LoadHandler when inputted filename is outside the data directory
+   *
    * @throws IOException
    */
   @Test
@@ -186,6 +186,7 @@ public class TestServerCSV {
 
   /**
    * Tests LoadHandler when inputted file does not exist
+   *
    * @throws IOException
    */
   @Test
@@ -205,6 +206,7 @@ public class TestServerCSV {
 
   /**
    * Tests that LoadHandler is able to reload when called again with a different file
+   *
    * @throws IOException
    */
   @Test
@@ -231,6 +233,7 @@ public class TestServerCSV {
 
   /**
    * Tests LoadHandler when no parameters at all are specified
+   *
    * @throws IOException
    */
   @Test
@@ -246,7 +249,9 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests successful calls to viewcsv by making sure outputted data includes the correct info, even after reloading
+   * Tests successful calls to viewcsv by making sure outputted data includes the correct info, even
+   * after reloading
+   *
    * @throws IOException
    */
   @Test
@@ -268,14 +273,14 @@ public class TestServerCSV {
     Assert.assertEquals(dataset.get(1).get(1), "74,489.00");
 
     // view after re-loading, make sure it changes
-    //call load again and asser success
+    // call load again and asser success
     clientConnection =
         tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
 
-    //call view again
+    // call view again
     clientConnection = tryRequest("viewcsv");
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
@@ -283,7 +288,7 @@ public class TestServerCSV {
     responseMap = (Map<String, Object>) response.get("responseMap");
     csvData = (Map<String, Object>) responseMap.get("CSV data");
     dataset = (List<List<String>>) csvData.get("dataset");
-    //check new viewing
+    // check new viewing
     Assert.assertEquals(dataset.get(0).get(0), "IPEDS Race");
     Assert.assertEquals(dataset.get(1).get(0), "Asian");
 
@@ -292,6 +297,7 @@ public class TestServerCSV {
 
   /**
    * Tests a call to viewcsv without calling loadcsv first
+   *
    * @throws IOException
    */
   @Test
@@ -306,8 +312,9 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests cases of calls to searchcsv: a basic successful search, a basic unsuccessful search, and a search
-   * without an identifier
+   * Tests cases of calls to searchcsv: a basic successful search, a basic unsuccessful search, and
+   * a search without an identifier
+   *
    * @throws IOException
    */
   @Test
@@ -347,6 +354,7 @@ public class TestServerCSV {
 
   /**
    * Tests a call to searchcsv without a call to loadcsv first
+   *
    * @throws IOException
    */
   @Test
@@ -362,6 +370,7 @@ public class TestServerCSV {
 
   /**
    * Tests searchcsv when identifier is empty
+   *
    * @throws IOException
    */
   @Test
@@ -384,8 +393,9 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests searchcsv with column number identifiers - tests a valid col num, a too small col num, and a too large
-   * col num
+   * Tests searchcsv with column number identifiers - tests a valid col num, a too small col num,
+   * and a too large col num
+   *
    * @throws IOException
    */
   @Test
@@ -425,8 +435,9 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests searchcsv with string identifiers. Tests a valid case, tests not case sensitive,
-   * and tests invalid col name
+   * Tests searchcsv with string identifiers. Tests a valid case, tests not case sensitive, and
+   * tests invalid col name
+   *
    * @throws IOException
    */
   @Test
@@ -469,9 +480,10 @@ public class TestServerCSV {
   }
 
   /**
-   * Tests various cases of calls to searchcsv where hasHeader has been set to false during load. Tests that one
-   * cannot search with a string identifier but can seach with a col num identifier. Also ensures that first row
-   * is returned in search results.
+   * Tests various cases of calls to searchcsv where hasHeader has been set to false during load.
+   * Tests that one cannot search with a string identifier but can seach with a col num identifier.
+   * Also ensures that first row is returned in search results.
+   *
    * @throws IOException
    */
   @Test
@@ -515,6 +527,7 @@ public class TestServerCSV {
 
   /**
    * Tests a search that outputs multiple rows and makes sure correct number of rows was returned
+   *
    * @throws IOException
    */
   @Test
@@ -542,6 +555,7 @@ public class TestServerCSV {
 
   /**
    * Tests searchcsv without search term or identifier parameters
+   *
    * @throws IOException
    */
   @Test

@@ -13,22 +13,21 @@ import java.util.Date;
 import java.util.HashMap;
 
 /**
- * Datasource that makes requests for Broadband data. Sends requests to convert state and county names into their
- * respective number codes and queries the ACS API for broadband data.
+ * Datasource that makes requests for Broadband data. Sends requests to convert state and county
+ * names into their respective number codes and queries the ACS API for broadband data.
  */
 public class BroadbandDatasource implements ACSDatasource<Broadband> {
   private HashMap<String, String> stateMap;
   private boolean hasMap;
 
-  /**
-   * Constructor that intializes hasMap boolean as false
-   */
+  /** Constructor that intializes hasMap boolean as false */
   public BroadbandDatasource() {
     this.hasMap = false;
   }
 
   /**
    * Populates stateMap, which maps each state name to its number code
+   *
    * @return populated state map
    * @throws URISyntaxException
    * @throws IOException
@@ -58,6 +57,7 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
 
   /**
    * Populates map that stores each county and its corresponding number code
+   *
    * @param stateNum code for the state to get counties for
    * @return populated map
    * @throws URISyntaxException
@@ -90,6 +90,7 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
 
   /**
    * Sends request to ACS API for broadband data
+   *
    * @param countyNum number code for county
    * @param stateNum number code for state
    * @return broadband data as a string

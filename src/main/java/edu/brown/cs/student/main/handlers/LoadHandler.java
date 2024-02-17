@@ -7,7 +7,6 @@ import edu.brown.cs.student.main.exceptions.FactoryFailureException;
 import edu.brown.cs.student.main.exceptions.MalformedDataException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import spark.Request;
 import spark.Response;
@@ -21,7 +20,9 @@ public class LoadHandler implements Route {
   private CSVDatasource state;
 
   /**
-   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been parsed yet
+   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been
+   * parsed yet
+   *
    * @param state
    */
   public LoadHandler(CSVDatasource state) {
@@ -29,8 +30,9 @@ public class LoadHandler implements Route {
   }
 
   /**
-   * Uses parameters from the request to properly parse the inputted csv file. Stores the parsed data in
-   * the datasource and returns a Response object
+   * Uses parameters from the request to properly parse the inputted csv file. Stores the parsed
+   * data in the datasource and returns a Response object
+   *
    * @param request
    * @param response
    * @return Response object describing the success of the fetch
@@ -74,6 +76,7 @@ public class LoadHandler implements Route {
 
   /**
    * Response object representing a successful load
+   *
    * @param response_type
    * @param responseMap
    */

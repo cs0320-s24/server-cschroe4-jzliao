@@ -11,8 +11,9 @@ import edu.brown.cs.student.main.handlers.*;
 import spark.Spark;
 
 /**
- * Our server class. Its endpoints include loadcsv, viewcsv, searchcsv, and broadband. The csv endpoints send
- * local data, while the broadband endpoint gets data from the ACS API and returns the relevant information.
+ * Our server class. Its endpoints include loadcsv, viewcsv, searchcsv, and broadband. The csv
+ * endpoints send local data, while the broadband endpoint gets data from the ACS API and returns
+ * the relevant information.
  */
 public class Server {
 

@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Record that represents CSVData
+ *
  * @param dataset the parsed dataset as a list of rows
  * @param hasHeader a boolean indicating if there is a header for the csv
  */

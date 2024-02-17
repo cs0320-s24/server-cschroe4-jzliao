@@ -35,6 +35,7 @@ public class ACSAPIUtilities {
 
   /**
    * Deserializes JSON representing state names and their state codes and returns them as a map
+   *
    * @param jsonString
    * @return state names and their corresponding codes as a map
    * @throws IOException
@@ -58,8 +59,9 @@ public class ACSAPIUtilities {
   }
 
   /**
-   * Deserializes JSON respresenting county names and their corresponding codes for a certain state and returns
-   * this info as a map
+   * Deserializes JSON respresenting county names and their corresponding codes for a certain state
+   * and returns this info as a map
+   *
    * @param jsonString
    * @return hashmap of county names and their corresponding number codes
    * @throws IOException

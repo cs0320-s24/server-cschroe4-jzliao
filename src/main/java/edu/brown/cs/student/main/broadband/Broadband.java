@@ -11,8 +11,9 @@ public class Broadband {
   private String dateFetched;
 
   /**
-   * Constructor for the class. Stores the name of the location (county, state), the broadband access percentage
-   * and the date the information was fetched as a String
+   * Constructor for the class. Stores the name of the location (county, state), the broadband
+   * access percentage and the date the information was fetched as a String
+   *
    * @param name
    * @param percent
    * @param date
@@ -26,7 +27,7 @@ public class Broadband {
   /**
    * @return name of the location of the information
    */
-  public String getName(){
+  public String getName() {
     return this.name;
   }
 
@@ -45,13 +46,14 @@ public class Broadband {
   }
 
   /**
-   * .equals() method. Makes sure the passed in object is not null and is a Broadband, then compares the
-   * results of their calls to toString()
+   * .equals() method. Makes sure the passed in object is not null and is a Broadband, then compares
+   * the results of their calls to toString()
+   *
    * @param obj object comparing itself to
    * @return boolean on whether the objects are equal or not
    */
   @Override
-  public boolean equals(Object obj){
+  public boolean equals(Object obj) {
     if (obj == null || this.getClass() != obj.getClass()) {
       return false;
     }

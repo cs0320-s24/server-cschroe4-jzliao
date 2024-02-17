@@ -6,11 +6,13 @@ import java.net.URISyntaxException;
 
 /**
  * Interface for datasources for the ACSHandler
+ *
  * @param <T> type of data requested
  */
 public interface ACSDatasource<T> {
   /**
    * Sends a request for data of type T based on the passed on parameters
+   *
    * @param stateName
    * @param countyName
    * @return
