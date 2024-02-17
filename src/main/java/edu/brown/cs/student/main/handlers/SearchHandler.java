@@ -15,14 +15,29 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * This class dictats how calls to searchcsv are handled.
+ */
 public class SearchHandler implements Route {
 
   private CSVDatasource state;
 
+  /**
+   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been parsed yet
+   * @param state
+   */
   public SearchHandler(CSVDatasource state) {
     this.state = state;
   }
 
+  /**
+   * Uses parameters from the request to properly search the data stored in the datasource. Adds the search results
+   * to the Response object and returns the said Response.
+   * @param request
+   * @param response
+   * @return Response object describing the success of the search
+   * @throws Exception
+   */
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String searchTerm = request.queryParams("searchTerm");
@@ -40,7 +55,7 @@ public class SearchHandler implements Route {
 
       Searcher searcher = new Searcher(rowsList, dataset.hasHeader());
       List<List<String>> result;
-      if (identifier.equals("*")) { // todo what should we do if completely empty
+      if (identifier.equals("*")) {
         result = searcher.search(searchTerm);
       } else {
         result = searcher.search(searchTerm, identifier);
@@ -52,23 +67,13 @@ public class SearchHandler implements Route {
     } catch (SearchFailureException | DataNotLoadedException | ColNotFoundException e) {
       return new SearchFailureResponse(e.getMessage()).serialize();
     }
-
-    /*TODO:
-       - parameters: copy logic from main
-       - also the current searcher makes its own parser so how should we bypass that or change the structure?
-       - handle column identifiers
-       - we might have to ask the user if the csv has headers when we load
-       - return a record with a response map containing each of the matching rows.
-           - should we format this data a bit more? maybe put each row in separately?
-
-     Notes:
-       - i changed parseAndSearch() in Main so the Searcher now takes in a list
-       - also i commented out the old search tests
-
-    */
-
   }
 
+  /**
+   * Response object representing a successful load
+   * @param response_type
+   * @param responseMap
+   */
   public record SearchSuccessResponse(String response_type, Map<String, Object> responseMap) {
     public SearchSuccessResponse(Map<String, Object> responseMap) {
       this("success", responseMap);

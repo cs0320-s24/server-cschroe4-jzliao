@@ -10,22 +10,41 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
+/**
+ * Datasource for csv-related handlers. Stores parses csv files and stores the parsed data
+ */
 public class LocalCSVSource implements CSVDatasource {
   private CSVData dataset;
   private boolean parsed;
 
+  /**
+   * Constructor for class. Sets the parsed boolean as false
+   */
   public LocalCSVSource() {
     this.parsed = false;
   }
 
+  /**
+   * Returns the stored dataset if it is parsed
+   * @return
+   * @throws DataNotLoadedException
+   */
   @Override
   public CSVData getDataset() throws DataNotLoadedException {
     if (parsed) {
-      return dataset; // todo make this safer?
+      return dataset;
     }
     throw new DataNotLoadedException("Load data successfully before requesting dataset");
   }
 
+  /**
+   * Parses a csv stored in the file passed in by creating a Parser.
+   * @param filename
+   * @param hasHeader boolean indicating if the file has a header
+   * @throws MalformedDataException
+   * @throws IOException
+   * @throws FactoryFailureException
+   */
   public void parseDataset(String filename, boolean hasHeader)
       throws MalformedDataException, IOException, FactoryFailureException {
     Reader reader = new FileReader(filename); // could throw file not found exception

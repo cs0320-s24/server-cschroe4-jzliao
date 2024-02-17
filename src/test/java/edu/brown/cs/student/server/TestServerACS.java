@@ -28,6 +28,11 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import spark.Spark;
 
+
+/**
+ * Tests server functionality relating to getting data from the ACS API. Essentially tests ACSHandler and
+ * associated classes like the ACSDatasources and broadband clases
+ */
 public class TestServerACS {
   private JsonAdapter<Map<String, Object>> adapter;
   private JsonAdapter<ACSHandler.ACSSuccessResponse> acsSuccessAdapter;
@@ -145,8 +150,7 @@ public class TestServerACS {
   }
 
   /**
-   * idk
-   * TODO for caden: what is this test doing?
+   * Tests if correctly errors on county not properly inputed
    * @throws IOException
    */
   @Test

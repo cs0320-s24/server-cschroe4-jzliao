@@ -24,6 +24,10 @@ import org.junit.jupiter.api.Test;
 import org.testng.Assert;
 import spark.Spark;
 
+/**
+ * Tests server functions relating to our CSV API. Essentially tests LoadHandler, SearchHandler, and ViewHandler.
+ */
+
 public class TestServerCSV {
   private JsonAdapter<Map<String, Object>> adapter;
   private final Type mapStringObject =
@@ -298,6 +302,7 @@ public class TestServerCSV {
     Map<String, Object> response =
         this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
+    clientConnection.disconnect();
   }
 
   /**
@@ -337,6 +342,7 @@ public class TestServerCSV {
     Assert.assertEquals(200, clientConnection.getResponseCode());
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("success", response.get("response_type"));
+    clientConnection.disconnect();
   }
 
   /**
@@ -351,6 +357,7 @@ public class TestServerCSV {
     Map<String, Object> response =
         this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
+    clientConnection.disconnect();
   }
 
   /**
@@ -373,6 +380,7 @@ public class TestServerCSV {
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
     Assert.assertEquals("Please input all parameter values", response.get("error_message"));
+    clientConnection.disconnect();
   }
 
   /**
@@ -413,10 +421,12 @@ public class TestServerCSV {
     response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
     Assert.assertEquals("error", response.get("response_type"));
     Assert.assertEquals("Column index invalid", response.get("error_message"));
+    clientConnection.disconnect();
   }
 
   /**
-   * Tests searchcsv with string identifiers. Tests a valid case, a case 
+   * Tests searchcsv with string identifiers. Tests a valid case, tests not case sensitive,
+   * and tests invalid col name
    * @throws IOException
    */
   @Test
@@ -455,8 +465,15 @@ public class TestServerCSV {
     searchResults = (List<List<String>>) responseMap.get("Search Results");
     Assert.assertEquals(searchResults.get(0).get(5), "235");
     Assert.assertEquals(searchResults.get(1).get(5), "95");
+    clientConnection.disconnect();
   }
 
+  /**
+   * Tests various cases of calls to searchcsv where hasHeader has been set to false during load. Tests that one
+   * cannot search with a string identifier but can seach with a col num identifier. Also ensures that first row
+   * is returned in search results.
+   * @throws IOException
+   */
   @Test
   public void testNoHeader() throws IOException {
     // loading csv to be used in test
@@ -493,8 +510,13 @@ public class TestServerCSV {
     responseMap = (Map<String, Object>) response.get("responseMap");
     searchResults = (List<List<String>>) responseMap.get("Search Results");
     Assert.assertEquals(searchResults.get(0).get(0), "IPEDS Race");
+    clientConnection.disconnect();
   }
 
+  /**
+   * Tests a search that outputs multiple rows and makes sure correct number of rows was returned
+   * @throws IOException
+   */
   @Test
   public void testOutputMultipleRowsSearch() throws IOException {
     // search case when it should output >1 row
@@ -515,32 +537,13 @@ public class TestServerCSV {
     Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
     List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
     Assert.assertEquals(searchResults.size(), 16);
-    // Assert.assertEquals(searchResults.get(0).get(5), "235");
-    // Assert.assertEquals(searchResults.get(1).get(5), "95");
-    // todo assert the right number of elements returned
+    clientConnection.disconnect();
   }
 
-  @Test
-  public void testIdentifierResult() throws IOException {
-    // loading csv to be used in test
-    HttpURLConnection clientConnection =
-        tryRequest("loadcsv?filename=data/census/postsecondary_education.csv&hasHeader=yes");
-    Assert.assertEquals(200, clientConnection.getResponseCode());
-    Map<String, Object> response =
-        this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("success", response.get("response_type"));
-
-    // search case where identifier makes a difference
-    // TODO: reconsider if this test case is necessary (ignore code below)
-    clientConnection = tryRequest("searchcsv?searchTerm=Brown%20University&identifier=*");
-    Assert.assertEquals(200, clientConnection.getResponseCode());
-    response = this.adapter.fromJson(new Buffer().readFrom(clientConnection.getInputStream()));
-    Assert.assertEquals("success", response.get("response_type"));
-    Map<String, Object> responseMap = (Map<String, Object>) response.get("responseMap");
-    List<List<String>> searchResults = (List<List<String>>) responseMap.get("Search Results");
-    Assert.assertEquals(searchResults.size(), 16);
-  }
-
+  /**
+   * Tests searchcsv without search term or identifier parameters
+   * @throws IOException
+   */
   @Test
   public void testNoParams() throws IOException {
     // loading csv to be used in test

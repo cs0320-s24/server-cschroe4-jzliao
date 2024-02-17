@@ -14,9 +14,9 @@ import java.util.List;
 public class ACSAPIUtilities {
 
   /**
-   * Deserializes JSON from the BoredAPI into an Activity object.
+   * Deserializes JSON from the ACS API into a Broadband object.
    *
-   * @param jsonBroadband
+   * @param jsonBroadband json returned by request to ACS API
    * @return
    */
   public static Broadband deserializeBroadband(String jsonBroadband, Date date) throws IOException {
@@ -33,36 +33,49 @@ public class ACSAPIUtilities {
     return new Broadband(name, percentage, date.toString());
   }
 
+  /**
+   * Deserializes JSON representing state names and their state codes and returns them as a map
+   * @param jsonString
+   * @return state names and their corresponding codes as a map
+   * @throws IOException
+   */
   public static HashMap<String, String> deserializeStateNum(String jsonString) throws IOException {
     Moshi moshi = new Moshi.Builder().build();
     JsonAdapter<List> adapter = moshi.adapter(List.class);
     List<List<String>> stateList = adapter.fromJson(jsonString);
     if (stateList == null) {
-      // TODO: do something for error checking
+      throw new IOException("No state found");
     }
     HashMap<String, String> stateMap = new HashMap<>();
-    stateList.remove(0); // TODO: might be a little janky
+    stateList.remove(0);
     for (List<String> state : stateList) {
       if (state.size() != 2) {
-        //        throw new
+        throw new IOException("Error in deserializing state number");
       }
       stateMap.put(state.get(0).toLowerCase(), state.get(1));
     }
     return stateMap;
   }
 
+  /**
+   * Deserializes JSON respresenting county names and their corresponding codes for a certain state and returns
+   * this info as a map
+   * @param jsonString
+   * @return hashmap of county names and their corresponding number codes
+   * @throws IOException
+   */
   public static HashMap<String, String> deserializeCountyNum(String jsonString) throws IOException {
     Moshi moshi = new Moshi.Builder().build();
     JsonAdapter<List> adapter = moshi.adapter(List.class);
     List<List<String>> countyList = adapter.fromJson(jsonString);
     if (countyList == null) {
-      // TODO: do something for error checking
+      throw new IOException("Error in county deserialization");
     }
     HashMap<String, String> countyMap = new HashMap<>();
-    countyList.remove(0); // TODO: might be a little janky
+    countyList.remove(0);
     for (List<String> row : countyList) {
       if (row.size() != 3) {
-        //        throw new
+        throw new IOException("Error in county deserialization");
       }
 
       String county = row.get(0).split(",")[0];

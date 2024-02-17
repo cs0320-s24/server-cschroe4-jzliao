@@ -10,6 +10,10 @@ import edu.brown.cs.student.main.datasource.csv.LocalCSVSource;
 import edu.brown.cs.student.main.handlers.*;
 import spark.Spark;
 
+/**
+ * Our server class. Its endpoints include loadcsv, viewcsv, searchcsv, and broadband. The csv endpoints send
+ * local data, while the broadband endpoint gets data from the ACS API and returns the relevant information.
+ */
 public class Server {
 
   public Server(CSVDatasource csvState) {
@@ -38,7 +42,7 @@ public class Server {
     // Notice this link alone leads to a 404... Why is that?
     System.out.println("Server started at http://localhost:" + port);
   }
-  // TODO should we use the ACSSource instead of having the ACSHandler define the urls
+
   public static void main(String[] args) {
     System.out.println("Server started");
     Server server = new Server(new LocalCSVSource());

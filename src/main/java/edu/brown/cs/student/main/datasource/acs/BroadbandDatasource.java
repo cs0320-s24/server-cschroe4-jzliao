@@ -12,14 +12,29 @@ import java.net.http.HttpResponse;
 import java.util.Date;
 import java.util.HashMap;
 
+/**
+ * Datasource that makes requests for Broadband data. Sends requests to convert state and county names into their
+ * respective number codes and queries the ACS API for broadband data.
+ */
 public class BroadbandDatasource implements ACSDatasource<Broadband> {
   private HashMap<String, String> stateMap;
   private boolean hasMap;
 
+  /**
+   * Constructor that intializes hasMap boolean as false
+   */
   public BroadbandDatasource() {
     this.hasMap = false;
   }
 
+  /**
+   * Populates stateMap, which maps each state name to its number code
+   * @return populated state map
+   * @throws URISyntaxException
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws EmptyResponseException
+   */
   private HashMap<String, String> sendStateRequest()
       throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
     // https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*
@@ -41,6 +56,15 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
     return ACSAPIUtilities.deserializeStateNum(stateJson);
   }
 
+  /**
+   * Populates map that stores each county and its corresponding number code
+   * @param stateNum code for the state to get counties for
+   * @return populated map
+   * @throws URISyntaxException
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws EmptyResponseException
+   */
   private HashMap<String, String> sendCountyRequest(String stateNum)
       throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
     // https://api.census.gov/data/2010/dec/sf1?get=NAME&for=county:*&in=state:06
@@ -64,6 +88,16 @@ public class BroadbandDatasource implements ACSDatasource<Broadband> {
     return ACSAPIUtilities.deserializeCountyNum(countyJson);
   }
 
+  /**
+   * Sends request to ACS API for broadband data
+   * @param countyNum number code for county
+   * @param stateNum number code for state
+   * @return broadband data as a string
+   * @throws EmptyResponseException
+   * @throws URISyntaxException
+   * @throws IOException
+   * @throws InterruptedException
+   */
   private String sendBroadbandRequest(String countyNum, String stateNum)
       throws EmptyResponseException, URISyntaxException, IOException, InterruptedException {
     // ex: county:*&in=state:06

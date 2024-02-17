@@ -13,14 +13,29 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * This class dictates how calls to the loadcsv endpoint are handled. Returns Response objects to
+ * querier based on whether data fetching was successful or not.
+ */
 public class LoadHandler implements Route {
-  private List<List<String>> data;
   private CSVDatasource state;
 
+  /**
+   * Constructor for class. Takes in a datasource that stores the dataset and if the csv has been parsed yet
+   * @param state
+   */
   public LoadHandler(CSVDatasource state) {
     this.state = state;
   }
 
+  /**
+   * Uses parameters from the request to properly parse the inputted csv file. Stores the parsed data in
+   * the datasource and returns a Response object
+   * @param request
+   * @param response
+   * @return Response object describing the success of the fetch
+   * @throws Exception
+   */
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String filename = request.queryParams("filename");
@@ -30,7 +45,6 @@ public class LoadHandler implements Route {
       return new LoadFailureResponse("Parameters not fulfilled").serialize();
     }
 
-    // TODO: test this functionality
     // setting the boolean indicating whether there is a header
     boolean header = false;
     if (hasHeader.equals("yes") || hasHeader.equals("true")) {
@@ -44,7 +58,7 @@ public class LoadHandler implements Route {
     }
 
     Map<String, Object> responseMap = new HashMap<>();
-    if (!filename.contains("data/")) { // todo should this have ./ needed
+    if (!filename.contains("data/")) {
       return new LoadFailureResponse("Error: file must not be outside of the /data/ directory")
           .serialize();
     }
@@ -58,6 +72,11 @@ public class LoadHandler implements Route {
     return new LoadSuccessResponse(responseMap).serialize();
   }
 
+  /**
+   * Response object representing a successful load
+   * @param response_type
+   * @param responseMap
+   */
   public record LoadSuccessResponse(String response_type, Map<String, Object> responseMap) {
     public LoadSuccessResponse(Map<String, Object> responseMap) {
       this("success", responseMap);

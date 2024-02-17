@@ -18,18 +18,39 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * In our program, this class dictates how calls to the broadband endpoint are handled. Generally, though, it is
+ * able to handle requests for different types of data. It takes in a datasource of generic type T and sends requests
+ * to the datasource given state and county names. It then uses the returned information to return a response to
+ * the querier.
+ * @param <T> type of data that is being queried
+ */
 public class ACSHandler<T> implements Route {
 
   private ACSDatasource<T> datasource;
   private String dataType;
 
+  /**
+   * Constructor for the class. Sets the datasource and dataType variables
+   * @param datasource Datasource that returns the information given parameters
+   * @param dataType type of data returned - in our implementation, this is Broadband data
+   */
   public ACSHandler(
-      ACSDatasource datasource,
-      String dataType) { // todo maybe take in a requester? and datasource?
+      ACSDatasource<T> datasource,
+      String dataType) {
     this.datasource = datasource;
     this.dataType = dataType;
   }
 
+  /**
+   * Uses the request parameters so that the datasource can request data. In our implementation, it uses the state
+   * and county names inputted by the user to send a request for Broadband data. Adds this data to a response, but
+   * returns a failed response if any errors arise.
+   * @param request
+   * @param response
+   * @return either a ACSSuccessResponse or a ACSFailureResponse
+   * @throws Exception
+   */
   @Override
   public Object handle(Request request, Response response) throws Exception {
     String stateName = request.queryParams("stateName");
@@ -60,27 +81,12 @@ public class ACSHandler<T> implements Route {
     }
   }
 
-  private HashMap<String, String> sendStateRequest()
-      throws URISyntaxException, IOException, InterruptedException, EmptyResponseException {
-    // https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*
-    HttpRequest buildACSApiRequest =
-        HttpRequest.newBuilder()
-            .uri(new URI("https://api.census.gov/data/2010/dec/sf1?get=NAME&for=state:*"))
-            .GET()
-            .build();
-
-    HttpResponse<String> sentStateNumResponse =
-        HttpClient.newBuilder()
-            .build()
-            .send(buildACSApiRequest, HttpResponse.BodyHandlers.ofString());
-
-    String stateJson = sentStateNumResponse.body();
-    if (stateJson.isEmpty()) {
-      throw new EmptyResponseException("Census data not found: adjust entered parameters");
-    }
-    return ACSAPIUtilities.deserializeStateNum(stateJson);
-  }
-
+  /**
+   * Record that represents a succesful response. Returned to querier in handle(). Stores a response map and
+   * has serializing capabilities
+   * @param response_type
+   * @param responseMap
+   */
   public record ACSSuccessResponse(String response_type, Map<String, Object> responseMap) {
     public ACSSuccessResponse(Map<String, Object> responseMap) {
       this("success", responseMap);
@@ -101,7 +107,11 @@ public class ACSHandler<T> implements Route {
     }
   }
 
-  /** Response object to send if someone gave a CSV that couldn't be parsed */
+  /**
+   * Response object that is returned when an error arises in fetching data
+   * @param response_type set as error
+   * @param error_message
+   */
   public record ACSFailureResponse(String response_type, String error_message) {
     public ACSFailureResponse(String errorMessage) {
       this("error", errorMessage);
